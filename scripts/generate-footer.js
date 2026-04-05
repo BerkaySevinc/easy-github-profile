@@ -20,6 +20,10 @@ function main() {
       </feComponentTransfer>
     </filter>
 
+    <filter id="text-shadow" x="-20%" y="-50%" width="140%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+
     <mask id="wave-mask-inv">
       <g filter="url(#alpha-boost-inv)">
 
@@ -60,13 +64,14 @@ V 350 H 0 Z">
   <rect width="100%" height="100%" fill="url(#bg-grad-inv)" mask="url(#wave-mask-inv)" />
 
   <!-- Powered by -->
-  <text x="750" y="144"
+  <text x="750" y="138"
     font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
-    font-size="16"
+    font-size="18"
     fill="#ffffff"
     opacity="0.5"
     text-anchor="middle"
-    letter-spacing="0.5">
+    letter-spacing="0.5"
+    filter="url(#text-shadow)">
     made with BerkaySevinc/easy-github-profile
   </text>
 
