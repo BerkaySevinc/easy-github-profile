@@ -1,6 +1,6 @@
 ## easy-github-profile
 
-A zero-effort GitHub profile README template. Fork it and your profile is live instantly — fully customizable, no coding required.
+A zero-effort GitHub profile README setup. Fork it and your profile is live instantly — fully customizable, no coding required.
 
 > 👇 See setup instructions below.
 
