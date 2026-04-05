@@ -1,6 +1,6 @@
 ## easy-github-profile
 
-A zero-effort GitHub profile README template. Fork it, edit one file, and your profile is live — no coding required.
+A zero-effort GitHub profile README template. Fork it and your profile is live instantly — fully customizable, no coding required.
 
 ---
 
@@ -48,23 +48,23 @@ A zero-effort GitHub profile README template. Fork it, edit one file, and your p
 
 Click the **Fork** button at the top right of this page.
 
-**2. Rename the repository**
+**2. Name the repository `{your-username}`**
 
-Go to your forked repo → **Settings** → rename it to `{your-username}` (must match your GitHub username exactly for the profile README to work).
+When forking, you can set the name directly. If you missed it, go to **Settings** and rename it there. The name must match your GitHub username exactly for the profile README to work.
 
-**3. Edit `config.json`**
+> If you already have a `{your-username}` repository, you'll need to delete it first.
 
-Customize your typing lines, badge sections, and optionally override your name and bio.
+**3. Trigger the Action**
 
-**4. Push — you're done**
+Go to **Actions** → **Generate Assets** → **Run workflow**. Your profile is live.
 
-Edit `config.json` and push. The Action runs automatically and generates all SVGs. Your profile is live.
+**4. Customize _(optional)_**
 
-> To generate SVGs without editing anything, trigger it manually: **Actions** → **Generate Assets** → **Run workflow**
+Edit `config.json` to personalize your typing lines, badge sections, colors, and more. See the [Customize](#customize) section below for details.
 
 ---
 
-## Configuration
+## Customize
 
 All customization happens in `config.json`.
 
@@ -128,17 +128,36 @@ To add a new section, add a new object to the array and add `<img src="assets/se
 
 ---
 
-### Using Sections in README
+## Editing README.md
 
-Place section images wherever you want in `README.md`:
+All generated assets are just image files — place them anywhere in `README.md` however you like. Here's the full example used in this repo:
 
 ```html
+<img src="assets/header.svg" width="100%"/>
+<br>
+<img src="assets/typing.svg" width="100%"/>
+<br>
 <div align="center">
+
   <img src="assets/sections/lang.svg"/>
-  <br><br>
+  <br>
+  <br>
   <img src="assets/sections/fw.svg"/>
+  <br>
+  <br>
+  <img src="assets/sections/tools.svg"/>
+
 </div>
+<br>
+<img src="assets/footer.svg" width="100%"/>
 ```
+
+| Asset | Path |
+|-------|------|
+| Header | `assets/header.svg` |
+| Typing animation | `assets/typing.svg` |
+| Section (label + badges) | `assets/sections/{id}.svg` |
+| Footer | `assets/footer.svg` |
 
 ---
 
