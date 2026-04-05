@@ -20,8 +20,9 @@ function main() {
       </feComponentTransfer>
     </filter>
 
-    <filter id="text-shadow" x="-20%" y="-50%" width="140%" height="200%">
-      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#000000" flood-opacity="0.6"/>
+    <filter id="text-shadow" x="-10%" y="-30%" width="120%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#000000" flood-opacity="0.7"/>
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.5"/>
     </filter>
 
     <mask id="wave-mask-inv">
@@ -68,7 +69,7 @@ V 350 H 0 Z">
     font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
     font-size="18"
     fill="#ffffff"
-    opacity="0.5"
+    fill-opacity="0.5"
     text-anchor="middle"
     letter-spacing="0.5"
     filter="url(#text-shadow)">
