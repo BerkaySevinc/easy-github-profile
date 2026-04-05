@@ -2,9 +2,11 @@
 
 A zero-effort GitHub profile README template. Fork it and your profile is live instantly — fully customizable, no coding required.
 
+> 👇 See setup instructions below.
+
 ---
 
-> 📋 Example profile — see setup instructions below.
+> 👤 Example profile.
 
 <img src="assets/header.svg" width="100%"/>
 <br>
@@ -26,23 +28,24 @@ A zero-effort GitHub profile README template. Fork it and your profile is live i
 
 ---
 
-## Features
+## ✨ Features
 
+- **Up in minutes** — just follow the Quick Start steps below, no configuration required
 - **One file to configure** — everything lives in `config.json`, no code to touch
-- **Fully automatic** — GitHub Actions generates all SVGs on every push and on a daily schedule
-- **GitHub API integration** — name and bio are pulled directly from your GitHub profile, no manual input needed
-- **No dependencies** — pure Node.js, no `npm install` required
-- **Animated header** — wave animation with your name and bio
-- **Typing effect** — animated typewriter with your custom lines
-- **Custom badge sections** — add as many sections as you want with any badges and colors
+
+- **Animations** — animated wave header, typewriter effect, and more
 - **Dark/light mode support** — labels automatically adapt to the viewer's theme
-- **Auto-detect text color** — light-colored badges automatically use dark text
-- **Fork-friendly** — works for any GitHub username automatically, no hardcoded values
+
+- **Fully automatic** — GitHub Actions generates all SVGs on every push and on a daily schedule
 - **Daily auto-update** — profile stays in sync with your GitHub data every day at midnight UTC
+
+- **No dependencies** — nothing to install
+- **GitHub API integration** — name and bio are pulled directly from your GitHub profile, no manual input needed
+- **Fork-friendly** — works for any GitHub username automatically, no hardcoded values
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### 1. Fork this repository
 
@@ -52,7 +55,7 @@ Click the **Fork** button at the top right of this page.
 
 When forking, you can set the name directly. If you missed it, go to **Settings** and rename it there. The name must match your GitHub username exactly for the profile README to work.
 
-> If you already have a `{your-username}` repository, you'll need to delete it first.
+> ⚠️ If you already have a `{your-username}` repository, you'll need to delete it first.
 
 ### 3. Clean up `README.md`
 
@@ -60,19 +63,19 @@ Remove any content that doesn't belong on your profile page — the project titl
 
 ### 4. Trigger the Action
 
-Go to **Actions** → **Generate Assets** → **Run workflow**. Your profile is live.
+Go to **Actions** → **Generate Assets** → **Run workflow**. Your profile is live. 🎉
 
 ### 5. Customize _(optional)_
 
-Edit `config.json` to personalize your typing lines, badge sections, colors, and more. See the [Customize](#customize) section below for details.
+Edit `config.json` to personalize your typing lines, badge sections, colors, and more. See the [Customize](#%EF%B8%8F-customize) section below for details.
 
 ---
 
-## Customize
+## ⚙️ Customize
 
 All customization happens in `config.json`.
 
-### Header
+### 🖼️ Header
 
 ```json
 "header": {
@@ -88,7 +91,7 @@ All customization happens in `config.json`.
 
 ---
 
-### Typing
+### ⌨️ Typing
 
 ```json
 "typing": {
@@ -105,7 +108,7 @@ All customization happens in `config.json`.
 
 ---
 
-### Sections
+### 🏷️ Sections
 
 ```json
 "sections": [
@@ -132,7 +135,7 @@ To add a new section, add a new object to the array and add `<img src="assets/se
 
 ---
 
-## Editing README.md
+## 📝 Editing README.md
 
 All generated assets are just image files — place them anywhere in `README.md` however you like. Here's the full example used in this repo:
 
@@ -165,6 +168,6 @@ All generated assets are just image files — place them anywhere in `README.md`
 
 ---
 
-## License
+## 📄 License
 
 MIT © [BerkaySevinc](https://github.com/BerkaySevinc)
