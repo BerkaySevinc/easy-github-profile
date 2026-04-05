@@ -62,7 +62,7 @@ V 350 H 0 Z">
   <!-- Powered by -->
   <text x="750" y="144"
     font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
-    font-size="14"
+    font-size="16"
     fill="#ffffff"
     opacity="0.5"
     text-anchor="middle"
