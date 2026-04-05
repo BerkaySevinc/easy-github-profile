@@ -4,13 +4,23 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 
 > 👇 See setup instructions below.
 
+<br>
+
 ---
 
-> 👤 Example profile.
+> 👤 Example profile.,
 
 <img src="assets/header.svg" width="100%"/>
 <br>
 <img src="assets/typing.svg" width="100%"/>
+<br>
+<img src="assets/stats.svg" width="100%"/>
+<br>
+<div align="center">
+  <img src="assets/langs.svg" width="100%"/>
+</div>
+<br>
+<img src="assets/repos.svg" width="100%"/>
 <br>
 <div align="center">
 
@@ -28,6 +38,8 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 
 ---
 
+<br>
+
 ## ✨ Features
 
 - **Up in minutes** — just follow the Quick Start steps below, no configuration required
@@ -43,7 +55,11 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 - **GitHub API integration** — name and bio are pulled directly from your GitHub profile, no manual input needed
 - **Fork-friendly** — works for any GitHub username automatically, no hardcoded values
 
+<br>
+
 ---
+
+<br>
 
 ## 🚀 Quick Start
 
@@ -69,7 +85,11 @@ Go to **Actions** → **Generate Assets** → **Run workflow**. Your profile is 
 
 Edit `config.json` to personalize your typing lines, badge sections, colors, and more. See the [Customize](#%EF%B8%8F-customize) section below for details.
 
+<br>
+
 ---
+
+<br>
 
 ## ⚙️ Customize
 
@@ -135,6 +155,8 @@ To add a new section, add a new object to the array and add `<img src="assets/se
 
 ---
 
+<br>
+
 ## 📝 Editing README.md
 
 All generated assets are just image files — place them anywhere in `README.md` however you like. Here's the full example used in this repo:
@@ -166,7 +188,11 @@ All generated assets are just image files — place them anywhere in `README.md`
 | Section (label + badges) | `assets/sections/{id}.svg` |
 | Footer | `assets/footer.svg` |
 
+<br>
+
 ---
+
+<br>
 
 ## 📄 License
 

@@ -60,6 +60,27 @@
     }
   ],
 
+  "stats": {
+
+    "_generates": "assets/stats.svg",
+    "_comment": "GitHub Stats Card — fetched automatically via GitHub GraphQL API"
+
+  },
+
+  "langs": {
+
+    "_generates": "assets/langs.svg",
+    "_comment": "Top Languages Chart — fetched automatically via GitHub GraphQL API"
+
+  },
+
+  "repos": {
+
+    "_generates": "assets/repos.svg",
+    "_comment": "Pinned Repositories — fetched automatically via GitHub GraphQL API (falls back to top-starred repos)"
+
+  },
+
   "footer": {
 
     "_generates": "assets/footer.svg"
