@@ -44,21 +44,25 @@ A zero-effort GitHub profile README template. Fork it and your profile is live i
 
 ## Quick Start
 
-**1. Fork this repository**
+### 1. Fork this repository
 
 Click the **Fork** button at the top right of this page.
 
-**2. Name the repository `{your-username}`**
+### 2. Name the repository `{your-username}`
 
 When forking, you can set the name directly. If you missed it, go to **Settings** and rename it there. The name must match your GitHub username exactly for the profile README to work.
 
 > If you already have a `{your-username}` repository, you'll need to delete it first.
 
-**3. Trigger the Action**
+### 3. Clean up `README.md`
+
+Remove any content that doesn't belong on your profile page — the project title, description, example note, and setup instructions.
+
+### 4. Trigger the Action
 
 Go to **Actions** → **Generate Assets** → **Run workflow**. Your profile is live.
 
-**4. Customize _(optional)_**
+### 5. Customize _(optional)_
 
 Edit `config.json` to personalize your typing lines, badge sections, colors, and more. See the [Customize](#customize) section below for details.
 
