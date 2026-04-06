@@ -90,16 +90,41 @@ function buildSvg(langs) {
     legend += `  <text x="${lx + 16}" y="93" class="leg">${escapeXml(langs[i].name)} ${(withPct[i].pct * 100).toFixed(1)}%</text>\n`;
   }
 
+  // Legend circles with pulse animation (staggered per language)
+  const itemW = Math.floor((W - 40) / langs.length);
+  let legendAnimated = '';
+  for (let i = 0; i < langs.length; i++) {
+    const lx = 20 + i * itemW;
+    const delay = (i * 0.4).toFixed(1);
+    legendAnimated += `  <circle cx="${lx + 5}" cy="88" r="5" fill="${langs[i].color}">
+    <animate attributeName="r" values="5;6.5;5" dur="2.5s" begin="${delay}s" repeatCount="indefinite"
+             calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
+    <animate attributeName="opacity" values="1;0.6;1" dur="2.5s" begin="${delay}s" repeatCount="indefinite"
+             calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
+  </circle>\n`;
+    legendAnimated += `  <text x="${lx + 16}" y="88" class="leg" dominant-baseline="central">${escapeXml(langs[i].name)} ${(withPct[i].pct * 100).toFixed(1)}%</text>\n`;
+  }
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
-    <mask id="bar-mask">
-      <rect x="${BAR_X}" y="${BAR_Y}" width="0" height="${BAR_H}" fill="white">
-        <animate attributeName="width" from="0" to="${BAR_W}" dur="1.2s"
-                 calcMode="spline" keyTimes="0;1" keySplines="0.25 0.1 0.25 1"
-                 fill="freeze"/>
-      </rect>
-    </mask>
     <clipPath id="bar-shape">
+      <rect x="${BAR_X}" y="${BAR_Y}" width="${BAR_W}" height="${BAR_H}" rx="4"/>
+    </clipPath>
+    <!-- Shimmer gradient — fills the moving rect left to right -->
+    <linearGradient id="shimmer-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="white" stop-opacity="0"/>
+      <stop offset="10%"  stop-color="white" stop-opacity="0.05"/>
+      <stop offset="20%"  stop-color="white" stop-opacity="0.15"/>
+      <stop offset="30%"  stop-color="white" stop-opacity="0.3"/>
+      <stop offset="40%"  stop-color="white" stop-opacity="0.55"/>
+      <stop offset="50%"  stop-color="white" stop-opacity="0.8"/>
+      <stop offset="60%"  stop-color="white" stop-opacity="0.55"/>
+      <stop offset="70%"  stop-color="white" stop-opacity="0.3"/>
+      <stop offset="80%"  stop-color="white" stop-opacity="0.15"/>
+      <stop offset="90%"  stop-color="white" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="shimmer-clip">
       <rect x="${BAR_X}" y="${BAR_Y}" width="${BAR_W}" height="${BAR_H}" rx="4"/>
     </clipPath>
   </defs>
@@ -123,12 +148,25 @@ function buildSvg(langs) {
   <!-- Bar track (background) -->
   <rect class="trk" x="${BAR_X}" y="${BAR_Y}" width="${BAR_W}" height="${BAR_H}" rx="4"/>
 
-  <!-- Colored segments: rounded via clipPath, animated via mask -->
-  <g clip-path="url(#bar-shape)" mask="url(#bar-mask)">
+  <!-- Colored segments -->
+  <g clip-path="url(#bar-shape)">
 ${barSegs}  </g>
 
-  <!-- Legend -->
-${legend}
+  <!-- Shimmer overlay on bar: diagonal rect translates across, clipped to bar -->
+  <g clip-path="url(#shimmer-clip)">
+    <g transform="skewX(-20)">
+      <rect x="0" y="${BAR_Y - 4}" width="160" height="${BAR_H + 8}" fill="url(#shimmer-grad)">
+        <animateTransform attributeName="transform" type="translate"
+          values="-180 0; -180 0; ${BAR_X + BAR_W + 180} 0"
+          keyTimes="0; 0.72; 1"
+          calcMode="spline" keySplines="0 0 1 1; 0.3 0 0.7 1"
+          dur="8s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+  </g>
+
+  <!-- Legend with pulse -->
+${legendAnimated}
 </svg>`;
 }
 
