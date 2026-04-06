@@ -8,7 +8,7 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 
 ---
 
-> 👤 Example profile.,
+> 👤 Example profile.
 
 <img src="assets/header.svg" width="100%"/>
 <img src="assets/typing.svg" width="100%"/>
