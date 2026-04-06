@@ -22,7 +22,7 @@
   </style>
 
   <rect class="bg" x="0.5" y="0.5" width="799" height="147" rx="10"/>
-  <text class="ttl" x="18" y="28">GitHub Stats</text>
+  <text class="ttl" x="400" y="28" text-anchor="middle">GitHub Stats</text>
   <line class="div" x1="18" y1="40" x2="782" y2="40"/>
 
   <text x="66.7" y="93"  text-anchor="middle" class="val">189</text>

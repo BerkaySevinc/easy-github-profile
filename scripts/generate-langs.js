@@ -118,7 +118,7 @@ function buildSvg(langs) {
     .leg { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; font-size: 11px; }
   </style>
 
-  <text class="ttl" x="20" y="24">Top Languages</text>
+  <text class="ttl" x="${W / 2}" y="24" text-anchor="middle">Top Languages</text>
 
   <!-- Bar track (background) -->
   <rect class="trk" x="${BAR_X}" y="${BAR_Y}" width="${BAR_W}" height="${BAR_H}" rx="4"/>

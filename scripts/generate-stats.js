@@ -96,7 +96,7 @@ function buildSvg(stats) {
   </style>
 
   <rect class="bg" x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" rx="10"/>
-  <text class="ttl" x="18" y="28">GitHub Stats</text>
+  <text class="ttl" x="${W / 2}" y="28" text-anchor="middle">GitHub Stats</text>
   <line class="div" x1="18" y1="40" x2="${W - 18}" y2="40"/>
 
 ${cells}
