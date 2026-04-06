@@ -152,6 +152,8 @@ All customization happens in `config.json`.
 
 To add a new section, add a new object to the array and add `<img src="assets/sections/{id}.svg"/>` to `README.md`.
 
+<br>
+
 ---
 
 <br>
