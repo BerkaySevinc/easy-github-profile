@@ -208,11 +208,21 @@ All generated assets are just image files — place them anywhere in `README.md`
 
 ```html
 <img src="assets/header.svg" width="100%"/>
-<br>
 <img src="assets/typing.svg" width="100%"/>
+<img src="assets/divider.svg" width="100%"/>
 <br>
 <div align="center">
-
+  <img src="assets/stats.svg"/>
+</div>
+<br>
+<img src="assets/divider.svg" width="100%"/>
+<br>
+<div align="center">
+  <img src="assets/langs.svg" width="100%"/>
+</div>
+<br>
+<img src="assets/divider.svg" width="100%"/>
+<div align="center">
   <img src="assets/sections/lang.svg"/>
   <br>
   <br>
@@ -220,7 +230,6 @@ All generated assets are just image files — place them anywhere in `README.md`
   <br>
   <br>
   <img src="assets/sections/tools.svg"/>
-
 </div>
 <br>
 <img src="assets/footer.svg" width="100%"/>
@@ -230,6 +239,9 @@ All generated assets are just image files — place them anywhere in `README.md`
 |-------|------|
 | Header | `assets/header.svg` |
 | Typing animation | `assets/typing.svg` |
+| Divider | `assets/divider.svg` |
+| GitHub Stats | `assets/stats.svg` |
+| Top Languages | `assets/langs.svg` |
 | Section (label + badges) | `assets/sections/{id}.svg` |
 | Footer | `assets/footer.svg` |
 
