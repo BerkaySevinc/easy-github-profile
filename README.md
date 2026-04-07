@@ -14,7 +14,9 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 <img src="assets/typing.svg" width="100%"/>
 <img src="assets/divider.svg" width="100%"/>
 <br>
-<img src="assets/stats.svg" width="100%"/>
+<div align="center">
+  <img src="assets/stats.svg"/>
+</div>
 <br>
 <img src="assets/divider.svg" width="100%"/>
 <br>
@@ -24,7 +26,6 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 <br>
 <img src="assets/divider.svg" width="100%"/>
 <div align="center">
-
   <img src="assets/sections/lang.svg"/>
   <br>
   <br>
@@ -32,7 +33,6 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
   <br>
   <br>
   <img src="assets/sections/tools.svg"/>
-
 </div>
 <br>
 <img src="assets/footer.svg" width="100%"/>
