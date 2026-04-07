@@ -16,6 +16,8 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 <br>
 <img src="assets/stats.svg" width="100%"/>
 <br>
+<img src="assets/divider.svg" width="100%"/>
+<br>
 <div align="center">
   <img src="assets/langs.svg" width="100%"/>
 </div>
