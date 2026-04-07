@@ -96,6 +96,8 @@ Edit `config.json` to personalize your typing lines, badge sections, colors, and
 
 All customization happens in `config.json`.
 
+<br>
+
 ### 🖼️ Header
 
 ```json
@@ -129,6 +131,40 @@ All customization happens in `config.json`.
 
 ---
 
+### 📊 Stats
+
+```json
+"stats": {
+  "show": {
+    "commits":   true,
+    "prs":       true,
+    "issues":    true,
+    "stars":     true,
+    "repos":     true,
+    "followers": true
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `show.commits` | Total commits this year (includes private) |
+| `show.prs` | Total pull requests |
+| `show.issues` | Total issues opened |
+| `show.stars` | Total stars across all repos |
+| `show.repos` | Total public repositories |
+| `show.followers` | Follower count |
+
+Set any field to `false` to hide it. Remaining stats auto-expand to fill the card.
+
+---
+
+### 🌐 Top Languages
+
+No configuration needed — top languages are fetched automatically from your public repositories and the top 6 are shown.
+
+---
+
 ### 🏷️ Sections
 
 ```json
@@ -153,6 +189,12 @@ All customization happens in `config.json`.
 | `badges[].color` | Badge background color (hex) |
 
 To add a new section, add a new object to the array and add `<img src="assets/sections/{id}.svg"/>` to `README.md`.
+
+---
+
+### ➖ Divider / 🔻 Footer
+
+No configuration needed — these are static animated SVGs.
 
 <br>
 
