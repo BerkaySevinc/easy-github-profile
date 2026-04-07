@@ -24,15 +24,15 @@
     @media (prefers-color-scheme: dark) {
       .ttl { fill: #e6edf3; }
       .trk { fill: #21262d; }
-      .leg { fill: #8b949e; }
+      .leg { fill: #b1bac4; }
     }
     @media (prefers-color-scheme: light) {
       .ttl { fill: #1f2328; }
       .trk { fill: #eaeef2; }
-      .leg { fill: #636e7b; }
+      .leg { fill: #424a53; }
     }
     .ttl { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; font-size: 14px; font-weight: 600; }
-    .leg { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; font-size: 11px; }
+    .leg { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; font-size: 12px; font-weight: 500; }
   </style>
 
   <text class="ttl" x="400" y="24" text-anchor="middle">Top Languages</text>
@@ -64,28 +64,23 @@
   <!-- Legend with pulse -->
   <circle cx="25" cy="88" r="5" fill="#f1e05a">
     <animate attributeName="r" values="5;6.5;5" dur="2.5s" begin="0.0s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
-    <animate attributeName="opacity" values="1;0.6;1" dur="2.5s" begin="0.0s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
   </circle>
-  <text x="36" y="88" class="leg" dominant-baseline="central">JavaScript 48.3%</text>
+  <text x="36" y="92.5" class="leg">JavaScript 48.3%</text>
   <circle cx="177" cy="88" r="5" fill="#178600">
     <animate attributeName="r" values="5;6.5;5" dur="2.5s" begin="0.4s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
-    <animate attributeName="opacity" values="1;0.6;1" dur="2.5s" begin="0.4s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
   </circle>
-  <text x="188" y="88" class="leg" dominant-baseline="central">C# 34.6%</text>
+  <text x="188" y="92.5" class="leg">C# 34.6%</text>
   <circle cx="329" cy="88" r="5" fill="#663399">
     <animate attributeName="r" values="5;6.5;5" dur="2.5s" begin="0.8s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
-    <animate attributeName="opacity" values="1;0.6;1" dur="2.5s" begin="0.8s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
   </circle>
-  <text x="340" y="88" class="leg" dominant-baseline="central">CSS 10.3%</text>
+  <text x="340" y="92.5" class="leg">CSS 10.3%</text>
   <circle cx="481" cy="88" r="5" fill="#e34c26">
     <animate attributeName="r" values="5;6.5;5" dur="2.5s" begin="1.2s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
-    <animate attributeName="opacity" values="1;0.6;1" dur="2.5s" begin="1.2s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
   </circle>
-  <text x="492" y="88" class="leg" dominant-baseline="central">HTML 6.9%</text>
+  <text x="492" y="92.5" class="leg">HTML 6.9%</text>
   <circle cx="633" cy="88" r="5" fill="#C1F12E">
     <animate attributeName="r" values="5;6.5;5" dur="2.5s" begin="1.6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
-    <animate attributeName="opacity" values="1;0.6;1" dur="2.5s" begin="1.6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
   </circle>
-  <text x="644" y="88" class="leg" dominant-baseline="central">Batchfile 0.0%</text>
+  <text x="644" y="92.5" class="leg">Batchfile 0.0%</text>
 
 </svg>
