@@ -3,6 +3,7 @@
 
 const { writeFileSync, readFileSync, mkdirSync } = require('fs');
 const { join, dirname } = require('path');
+const { resolveTheme, loadTheme } = require('./theme');
 
 const CHAR_WIDTH     = 13.2;
 const SVG_WIDTH      = 800;
@@ -32,7 +33,7 @@ function r(n) {
   return parseFloat(n.toFixed(2));
 }
 
-function buildCss(lines) {
+function buildCss(lines, accent) {
   const N      = lines.length;
   const window = 100 / N;
   let css = '';
@@ -98,7 +99,7 @@ function buildCss(lines) {
 
   // Cursor blink
   css += `\n  /* Cursor blink */\n`;
-  css += `  .cur { fill: #A78BFA; animation: blink 1.2s step-end infinite; }\n`;
+  css += `  .cur { fill: ${accent}; animation: blink 1.2s step-end infinite; }\n`;
   css += `  @keyframes blink {\n`;
   css += `    0%, 100% { opacity: 1; }\n`;
   css += `    50%      { opacity: 0; }\n`;
@@ -107,7 +108,7 @@ function buildCss(lines) {
   return css;
 }
 
-function buildSvgBody(lines) {
+function buildSvgBody(lines, _accent) {
   const metrics = lines.map(line => ({
     textLength: r(line.length * CHAR_WIDTH),
     x:          r((SVG_WIDTH - line.length * CHAR_WIDTH) / 2),
@@ -138,18 +139,18 @@ function buildSvgBody(lines) {
   return out;
 }
 
-function buildSvg(lines) {
+function buildSvg(lines, accent) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${SVG_WIDTH}" height="54" viewBox="0 0 ${SVG_WIDTH} 54">
 <style>
   .t {
     font-family: 'Consolas', 'Monaco', 'Lucida Console', 'Courier New', monospace;
     font-size: 22px;
     font-weight: 700;
-    fill: #A78BFA;
+    fill: ${accent};
   }
-${buildCss(lines)}</style>
+${buildCss(lines, accent)}</style>
 
-${buildSvgBody(lines)}
+${buildSvgBody(lines, accent)}
 </svg>`;
 }
 
@@ -185,7 +186,8 @@ async function main() {
 
   const outPath = join(__dirname, '..', 'assets', 'typing.svg');
   mkdirSync(dirname(outPath), { recursive: true });
-  writeFileSync(outPath, buildSvg(lines), 'utf8');
+  const { accent } = resolveTheme(loadTheme());
+  writeFileSync(outPath, buildSvg(lines, accent), 'utf8');
   console.log(`Generated assets/typing.svg — ${lines.length} lines`);
 }
 
