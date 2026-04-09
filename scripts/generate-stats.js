@@ -58,7 +58,7 @@ function fmt(n) {
   return String(n);
 }
 
-function buildSvg(stats, show, accent, color) {
+function buildSvg(stats, show, accent, titleColor) {
   const allItems = [
     { key: 'commits',   value: fmt(stats.commits),   label: 'Commits'       },
     { key: 'prs',       value: fmt(stats.prs),       label: 'Pull Requests' },
@@ -86,15 +86,15 @@ function buildSvg(stats, show, accent, color) {
   <style>
     @media (prefers-color-scheme: dark) {
       .bg  { fill: #161b22; stroke: #30363d; }
-      .ttl { fill: #e6edf3; }
-      .val { fill: ${accent}; }
+      .ttl { fill: ${titleColor.dark}; }
+      .val { fill: ${accent.dark}; }
       .lbl { fill: #8b949e; }
       .div { stroke: #30363d; }
     }
     @media (prefers-color-scheme: light) {
       .bg  { fill: #f6f8fa; stroke: #d0d7de; }
-      .ttl { fill: #1f2328; }
-      .val { fill: ${color}; }
+      .ttl { fill: ${titleColor.light}; }
+      .val { fill: ${accent.light}; }
       .lbl { fill: #636e7b; }
       .div { stroke: #d0d7de; }
     }
@@ -126,8 +126,8 @@ async function main() {
   const stats = await fetchStats(owner, process.env.GITHUB_TOKEN);
   const outPath = join(__dirname, '..', 'assets', 'stats.svg');
   mkdirSync(dirname(outPath), { recursive: true });
-  const { accent, gradientEnd } = resolveTheme(loadTheme());
-  writeFileSync(outPath, buildSvg(stats, show, accent, gradientEnd), 'utf8');
+  const { accent, titleColor } = resolveTheme(loadTheme());
+  writeFileSync(outPath, buildSvg(stats, show, accent, titleColor), 'utf8');
   console.log(`Generated assets/stats.svg — commits: ${stats.commits}, stars: ${stats.stars}, repos: ${stats.repos}`);
 }
 

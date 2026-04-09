@@ -33,7 +33,7 @@ function r(n) {
   return parseFloat(n.toFixed(2));
 }
 
-function buildCss(lines, accent) {
+function buildCss(lines) {
   const N      = lines.length;
   const window = 100 / N;
   let css = '';
@@ -99,7 +99,7 @@ function buildCss(lines, accent) {
 
   // Cursor blink
   css += `\n  /* Cursor blink */\n`;
-  css += `  .cur { fill: ${accent}; animation: blink 1.2s step-end infinite; }\n`;
+  css += `  .cur { animation: blink 1.2s step-end infinite; }\n`;
   css += `  @keyframes blink {\n`;
   css += `    0%, 100% { opacity: 1; }\n`;
   css += `    50%      { opacity: 0; }\n`;
@@ -108,7 +108,7 @@ function buildCss(lines, accent) {
   return css;
 }
 
-function buildSvgBody(lines, _accent) {
+function buildSvgBody(lines) {
   const metrics = lines.map(line => ({
     textLength: r(line.length * CHAR_WIDTH),
     x:          r((SVG_WIDTH - line.length * CHAR_WIDTH) / 2),
@@ -146,11 +146,12 @@ function buildSvg(lines, accent) {
     font-family: 'Consolas', 'Monaco', 'Lucida Console', 'Courier New', monospace;
     font-size: 22px;
     font-weight: 700;
-    fill: ${accent};
   }
-${buildCss(lines, accent)}</style>
+  @media (prefers-color-scheme: dark)  { .t, .cur { fill: ${accent.dark}; } }
+  @media (prefers-color-scheme: light) { .t, .cur { fill: ${accent.light}; } }
+${buildCss(lines)}</style>
 
-${buildSvgBody(lines, accent)}
+${buildSvgBody(lines)}
 </svg>`;
 }
 

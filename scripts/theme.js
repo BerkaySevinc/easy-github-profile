@@ -4,12 +4,8 @@
 const { readFileSync } = require('fs');
 const { join } = require('path');
 
-const DEFAULT_GRADIENT = ['#0d1117', '#4c1d95'];
-const DEFAULT_ACCENT   = '#a78bfa';
-
-// GitHub page background colors — update if GitHub changes their theme
-const GITHUB_BG_DARK  = '#0d1117';
-const GITHUB_BG_LIGHT = '#ffffff';
+const DEFAULT_GRADIENT = ['transparent', 'transparent'];
+const DEFAULT_ACCENT   = { dark: '#e6edf3', light: '#1f2328' };
 
 // Named CSS colors → { r, g, b, a }
 const NAMED_COLORS = {
@@ -30,7 +26,6 @@ const NAMED_COLORS = {
   grey:        { r: 128, g: 128, b: 128, a: 1 },
 };
 
-// Parse any CSS color string → { r, g, b, a } (r/g/b: 0–255, a: 0–1)
 function parseColor(v) {
   if (!v || typeof v !== 'string') return null;
   const s = v.trim().toLowerCase();
@@ -62,7 +57,7 @@ function parseColor(v) {
     return { r: hue2rgb(h+1/3)*255, g: hue2rgb(h)*255, b: hue2rgb(h-1/3)*255, a };
   }
 
-  return null;
+  return { r: 0, g: 0, b: 0, a: 0 };
 }
 
 function colorToRgba({ r, g, b, a }) {
@@ -72,88 +67,38 @@ function colorToRgba({ r, g, b, a }) {
   return `rgba(${c(r)}, ${c(g)}, ${c(b)}, ${parseFloat(alpha.toFixed(4))})`;
 }
 
-function lerpParsed(a, b, t) {
-  return { r: a.r+(b.r-a.r)*t, g: a.g+(b.g-a.g)*t, b: a.b+(b.b-a.b)*t, a: a.a+(b.a-a.a)*t };
-}
-
-function isAdaptive(parsed) {
-  return parsed && parsed.a === 0;
-}
-
 function isValidColor(v) {
   return typeof v === 'string' && v.trim().length > 0;
 }
 
 /**
  * Returns { gradientStops, accent, gradientEnd }.
- *
- * Each stop is either:
- *   { offset, color }                         — normal, single color
- *   { offset, dark, light, adaptive: true }   — adaptive bg color (prefers-color-scheme)
- *
- * When a gradient end is transparent/none/alpha=0, it is replaced with
- * the GitHub background color for dark/light mode respectively,
- * so the gradient blends seamlessly with the page background.
+ * gradientStops: 3 stops:
+ *   0%   — first config color at alpha 0 (fade-in start)
+ *   20%  — first config color as-is
+ *   100% — second config color
  */
 function resolveTheme(theme) {
   const raw = theme?.gradient;
   const [start, end] = (Array.isArray(raw) && raw.length === 2 && raw.every(isValidColor))
     ? raw : DEFAULT_GRADIENT;
 
-  const accent = isValidColor(theme?.accent) ? theme.accent : DEFAULT_ACCENT;
+  const accent = isValidColor(theme?.accent)
+    ? { dark: theme.accent, light: theme.accent }
+    : DEFAULT_ACCENT;
 
-  const startP = parseColor(start) ?? { r: 0, g: 0, b: 0, a: 0 };
-  const endP   = parseColor(end)   ?? { r: 0, g: 0, b: 0, a: 0 };
+  const startP = parseColor(start);
+  const endP   = parseColor(end);
 
-  const startAdaptive = isAdaptive(startP);
-  const endAdaptive   = isAdaptive(endP);
-
-  // Compute mid for dark and light variants separately
-  const startDark  = startAdaptive ? parseColor(GITHUB_BG_DARK)  : startP;
-  const startLight = startAdaptive ? parseColor(GITHUB_BG_LIGHT) : startP;
-  const endDark    = endAdaptive   ? parseColor(GITHUB_BG_DARK)  : endP;
-  const endLight   = endAdaptive   ? parseColor(GITHUB_BG_LIGHT) : endP;
-
-  const midDark  = lerpParsed(startDark,  endDark,  0.35);
-  const midLight = lerpParsed(startLight, endLight, 0.35);
-
-  const midAdaptive = startAdaptive || endAdaptive;
-
-  const gradientStops = [
-    startAdaptive
-      ? { offset: '0%',  adaptive: true, dark: GITHUB_BG_DARK,          light: GITHUB_BG_LIGHT }
-      : { offset: '0%',  color: start },
-    midAdaptive
-      ? { offset: '40%', adaptive: true, dark: colorToRgba(midDark),     light: colorToRgba(midLight) }
-      : { offset: '40%', color: colorToRgba(lerpParsed(startP, endP, 0.35)) },
-    endAdaptive
-      ? { offset: '100%', adaptive: true, dark: GITHUB_BG_DARK,          light: GITHUB_BG_LIGHT }
-      : { offset: '100%', color: end },
-  ];
-
-  return { gradientStops, accent, gradientEnd: end };
-}
-
-/**
- * Converts gradientStops to SVG <stop> elements + optional CSS for adaptive stops.
- * Returns { stopsHtml, css } — embed css inside <style>, stopsHtml inside <linearGradient>.
- */
-function buildGradientSvg(gradientStops, gradientId) {
-  let css = '';
-  let stopsHtml = '';
-
-  gradientStops.forEach((stop, i) => {
-    if (stop.adaptive) {
-      const cls = `gs-${gradientId}-${i}`;
-      css += `\n    @media (prefers-color-scheme: dark)  { .${cls} { stop-color: ${stop.dark}; } }`;
-      css += `\n    @media (prefers-color-scheme: light) { .${cls} { stop-color: ${stop.light}; } }`;
-      stopsHtml += `      <stop class="${cls}" offset="${stop.offset}"/>\n`;
-    } else {
-      stopsHtml += `      <stop offset="${stop.offset}" stop-color="${stop.color}"/>\n`;
-    }
-  });
-
-  return { stopsHtml, css };
+  return {
+    gradientStops: [
+      { offset: '0%',   color: colorToRgba(startP) },
+      { offset: '100%', color: colorToRgba(endP)   },
+    ],
+    accent,
+    titleColor: DEFAULT_ACCENT,
+    gradientEnd: end,
+  };
 }
 
 function loadTheme() {
@@ -165,4 +110,4 @@ function loadTheme() {
   }
 }
 
-module.exports = { resolveTheme, loadTheme, buildGradientSvg };
+module.exports = { resolveTheme, loadTheme };

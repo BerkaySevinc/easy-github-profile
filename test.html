@@ -225,14 +225,17 @@
     // ── Theme ──
     const saved = localStorage.getItem('preview-theme') ?? 'dark';
     if (saved === 'light') applyLight();
+    else applyDark();
 
     function applyLight() {
       document.body.classList.add('light');
+      document.documentElement.style.colorScheme = 'light';
       document.getElementById('themeIcon').textContent  = '🌙';
       document.getElementById('themeLabel').textContent = 'Dark mode';
     }
     function applyDark() {
       document.body.classList.remove('light');
+      document.documentElement.style.colorScheme = 'dark';
       document.getElementById('themeIcon').textContent  = '☀️';
       document.getElementById('themeLabel').textContent = 'Light mode';
     }

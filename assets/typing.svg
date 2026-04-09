@@ -4,8 +4,9 @@
     font-family: 'Consolas', 'Monaco', 'Lucida Console', 'Courier New', monospace;
     font-size: 22px;
     font-weight: 700;
-    fill: #a78bfa;
   }
+  @media (prefers-color-scheme: dark)  { .t, .cur { fill: #a78bfa; } }
+  @media (prefers-color-scheme: light) { .t, .cur { fill: #a78bfa; } }
   .cr1 { animation: cl1 20s infinite; }
   .cr2 { animation: cl2 20s infinite; }
   .cr3 { animation: cl3 20s infinite; }
@@ -108,7 +109,7 @@
   }
 
   /* Cursor blink */
-  .cur { fill: #a78bfa; animation: blink 1.2s step-end infinite; }
+  .cur { animation: blink 1.2s step-end infinite; }
   @keyframes blink {
     0%, 100% { opacity: 1; }
     50%      { opacity: 0; }

@@ -2,7 +2,7 @@
   "theme": {
 
     "_gradient_comment": "Two-stop gradient used in header, divider, and footer backgrounds. Must be 6-digit hex values.",
-    "gradient": ["transparent", "#4c1d95"],
+    "gradient": ["#1e1b4b", "#4c1d95"],
 
     "_accent_comment": "Accent color used for typing text, cursor, and stats values.",
     "accent": "#a78bfa"
