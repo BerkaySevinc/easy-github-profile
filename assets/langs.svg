@@ -43,8 +43,8 @@
 
   <!-- Colored segments -->
   <g clip-path="url(#bar-shape)">
-      <rect x="20" y="42" width="377" height="22" fill="#f1e05a"/>
-      <rect x="397" y="42" width="252" height="22" fill="#178600"/>
+      <rect x="20" y="42" width="376" height="22" fill="#f1e05a"/>
+      <rect x="396" y="42" width="253" height="22" fill="#178600"/>
       <rect x="649" y="42" width="75" height="22" fill="#663399"/>
       <rect x="724" y="42" width="56" height="22" fill="#e34c26"/>
   </g>
@@ -67,7 +67,7 @@
     <animate attributeName="r" values="5;6.5;5" dur="2.5s" begin="0.0s" repeatCount="indefinite"
              calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
   </circle>
-  <text x="36" y="92.5" class="leg">JavaScript 49.6%</text>
+  <text x="36" y="92.5" class="leg">JavaScript 49.5%</text>
   <circle cx="177" cy="88" r="5" fill="#178600">
     <animate attributeName="r" values="5;6.5;5" dur="2.5s" begin="0.4s" repeatCount="indefinite"
              calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
@@ -77,7 +77,7 @@
     <animate attributeName="r" values="5;6.5;5" dur="2.5s" begin="0.8s" repeatCount="indefinite"
              calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
   </circle>
-  <text x="340" y="92.5" class="leg">CSS 9.8%</text>
+  <text x="340" y="92.5" class="leg">CSS 9.9%</text>
   <circle cx="481" cy="88" r="5" fill="#e34c26">
     <animate attributeName="r" values="5;6.5;5" dur="2.5s" begin="1.2s" repeatCount="indefinite"
              calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
