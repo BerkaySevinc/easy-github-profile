@@ -3,7 +3,7 @@
 
 const { writeFileSync, readFileSync, mkdirSync } = require('fs');
 const { join, dirname } = require('path');
-const { resolveTheme, loadTheme } = require('./theme');
+const { resolveTheme, loadTheme, buildGradientSvg } = require('./theme');
 
 const MAX_BIO_LENGTH = 80;
 
@@ -44,7 +44,8 @@ async function main() {
   const displayBio  = truncate(overrideBio ?? apiBio ?? '', MAX_BIO_LENGTH);
 
   const { gradientStops } = resolveTheme(loadTheme());
-  const svg     = buildSvg(displayName, displayBio, gradientStops);
+  const { stopsHtml, css } = buildGradientSvg(gradientStops, 'hdr');
+  const svg     = buildSvg(displayName, displayBio, stopsHtml, css);
   const outPath = join(__dirname, '..', 'assets', 'header.svg');
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, svg, 'utf8');
@@ -64,8 +65,7 @@ function escapeXml(str) {
     .replace(/"/g, '&quot;');
 }
 
-function buildSvg(name, bio, gradientStops) {
-  const stops = gradientStops.map(s => `      <stop offset="${s.offset}" stop-color="${s.color}"/>`).join('\n');
+function buildSvg(name, bio, stopsHtml, gradientCss) {
   const bioLine = bio
     ? `\n  <!-- DESC -->
   <text x="750" y="178"
@@ -81,11 +81,10 @@ function buildSvg(name, bio, gradientStops) {
     : '';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 310" width="100%" height="100%">
-
+${gradientCss ? `\n  <style>${gradientCss}\n  </style>` : ''}
   <defs>
     <linearGradient id="bg-grad-inv" x1="0" y1="0" x2="1" y2="0">
-${stops}
-    </linearGradient>
+${stopsHtml}    </linearGradient>
 
     <filter id="alpha-boost-inv">
       <feComponentTransfer>
