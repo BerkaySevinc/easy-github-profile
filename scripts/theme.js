@@ -4,8 +4,9 @@
 const { readFileSync } = require('fs');
 const { join } = require('path');
 
-const DEFAULT_GRADIENT = ['transparent', 'transparent'];
-const DEFAULT_ACCENT   = { dark: '#e6edf3', light: '#1f2328' };
+const DEFAULT_GRADIENT_COLORS = ['transparent', 'transparent'];
+const DEFAULT_ACCENT          = { dark: '#e6edf3', light: '#1f2328' };
+const FADE_OFFSET             = 40;
 
 // Named CSS colors → { r, g, b, a }
 const NAMED_COLORS = {
@@ -71,33 +72,42 @@ function isValidColor(v) {
   return typeof v === 'string' && v.trim().length > 0;
 }
 
-/**
- * Returns { gradientStops, accent, gradientEnd }.
- * gradientStops: 3 stops:
- *   0%   — first config color at alpha 0 (fade-in start)
- *   20%  — first config color as-is
- *   100% — second config color
- */
 function resolveTheme(theme) {
-  const raw = theme?.gradient;
-  const [start, end] = (Array.isArray(raw) && raw.length === 2 && raw.every(isValidColor))
-    ? raw : DEFAULT_GRADIENT;
+  const grad   = theme?.gradient;
+  const colors = grad?.colors;
+  const [start, end] = (Array.isArray(colors) && colors.length === 2 && colors.every(isValidColor))
+    ? colors : DEFAULT_GRADIENT_COLORS;
 
   const accent = isValidColor(theme?.accent)
     ? { dark: theme.accent, light: theme.accent }
     : DEFAULT_ACCENT;
 
+  const fadeLeft  = grad?.fade?.left  !== false;
+  const fadeRight = grad?.fade?.right !== false;
+
   const startP = parseColor(start);
   const endP   = parseColor(end);
 
+  const fadeMaskStops = [];
+  if (fadeLeft) {
+    fadeMaskStops.push(`      <stop offset="0%"              stop-color="white" stop-opacity="0"/>`);
+    fadeMaskStops.push(`      <stop offset="${FADE_OFFSET}%"           stop-color="white" stop-opacity="1"/>`);
+  } else {
+    fadeMaskStops.push(`      <stop offset="0%"              stop-color="white" stop-opacity="1"/>`);
+  }
+  if (fadeRight) {
+    fadeMaskStops.push(`      <stop offset="${100 - FADE_OFFSET}%"    stop-color="white" stop-opacity="1"/>`);
+    fadeMaskStops.push(`      <stop offset="100%"             stop-color="white" stop-opacity="0"/>`);
+  } else {
+    fadeMaskStops.push(`      <stop offset="100%"             stop-color="white" stop-opacity="1"/>`);
+  }
+
   return {
-    gradientStops: [
-      { offset: '0%',   color: colorToRgba(startP) },
-      { offset: '100%', color: colorToRgba(endP)   },
-    ],
     accent,
-    titleColor: DEFAULT_ACCENT,
-    gradientEnd: end,
+    titleColor:    DEFAULT_ACCENT,
+    startColor:    colorToRgba(startP),
+    endColor:      colorToRgba(endP),
+    fadeMaskStops: fadeMaskStops.join('\n'),
   };
 }
 
