@@ -13,7 +13,7 @@
       --text:        #e6edf3;
       --text-muted:  #8b949e;
       --readme-bg:   #0d1117;
-      --readme-max:  1012px;
+      --readme-max:  820px;
       --readme-pad:  24px;
       --mobile-w:    390px;
     }
@@ -106,7 +106,11 @@
     .readme-content {
       padding: var(--readme-pad);
     }
-    .readme-content img {
+    .readme-content p {
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+    .readme-content p img {
       max-width: 100%;
       display: block;
     }
@@ -115,8 +119,8 @@
     }
     .readme-content [align="center"] img {
       display: inline-block;
+      max-width: 100%;
     }
-    .readme-content br { display: block; content: ''; margin: 4px 0; }
 
     /* ── Mobile frame ── */
     .panel-mobile { flex: 0 0 auto; }
@@ -276,15 +280,14 @@
     // Minimal markdown → HTML (only what GitHub profile READMEs use)
     function mdToHtml(md) {
       return md
-        // img tags — pass through as-is
-        // div align tags — pass through as-is
-        // br tags — pass through as-is
         // Strip markdown headings
         .replace(/^#{1,6}\s+.+$/gm, '')
         // Strip blockquotes
         .replace(/^>\s*.+$/gm, '')
         // Strip horizontal rules
         .replace(/^---+$/gm, '')
+        // Wrap standalone <img> lines (not indented = not inside a div) in <p> tags
+        .replace(/^(<img\b[^>]*\/?>)$/gm, '<p>$1</p>')
         // Collapse 3+ blank lines to 2
         .replace(/\n{3,}/g, '\n\n')
         .trim();

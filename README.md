@@ -27,34 +27,23 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 <br>
 <img src="assets/divider.svg" width="100%"/>
 <div align="center">
-  <img src="assets/sections/lang.svg"/>
-  <br>
-  <br>
-  <img src="assets/sections/fw.svg"/>
-  <br>
-  <br>
-  <img src="assets/sections/tools.svg"/>
-</div>
-<br>
-<img src="assets/divider.svg" width="100%"/>
-<div align="center">
   <img src="assets/labels/lang.svg"/><br>
-  <img src="assets/badges/C%23.svg">
-  <img src="assets/badges/JAVASCRIPT.svg">
-  <img src="assets/badges/HTML5.svg">
-  <img src="assets/badges/CSS3.svg">
+  <img src="assets/badges/csharp.svg">
+  <img src="assets/badges/javascript.svg">
+  <img src="assets/badges/html5.svg">
+  <img src="assets/badges/css3.svg">
   <br><br>
   <img src="assets/labels/fw.svg"/><br>
-  <img src="assets/badges/.NET.svg">
-  <img src="assets/badges/ASP.NET%20CORE.svg">
-  <img src="assets/badges/NODE.JS.svg">
+  <img src="assets/badges/dotnet.svg">
+  <img src="assets/badges/aspnet-core.svg">
+  <img src="assets/badges/nodejs.svg">
   <br><br>
   <img src="assets/labels/tools.svg"/><br>
-  <img src="assets/badges/GIT.svg">
-  <img src="assets/badges/GITHUB.svg">
-  <img src="assets/badges/VISUAL%20STUDIO.svg">
-  <img src="assets/badges/VS%20CODE.svg">
-  <img src="assets/badges/CLAUDE%20CODE.svg">
+  <img src="assets/badges/git.svg">
+  <img src="assets/badges/github.svg">
+  <img src="assets/badges/visual-studio.svg">
+  <img src="assets/badges/vscode.svg">
+  <img src="assets/badges/claude-code.svg">
 </div>
 <br>
 <img src="assets/footer.svg" width="100%"/>
@@ -71,6 +60,7 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 
 - **Animations** — animated wave header, typewriter effect, and more
 - **Dark/light mode support** — labels automatically adapt to the viewer's theme
+- **Responsive** — adapts seamlessly to any screen size, from mobile to desktop
 
 - **Fully automatic** — GitHub Actions generates all SVGs on every push and on a daily schedule
 - **Daily auto-update** — profile stays in sync with your GitHub data every day at midnight UTC
@@ -188,30 +178,46 @@ No configuration needed — top languages are fetched automatically from your pu
 
 ---
 
-### 🏷️ Sections
+### 🏷️ Labels
 
 ```json
-"sections": [
-  {
-    "id": "lang",
-    "label": "Languages",
-    "badges": [
-      { "text": "C#",         "color": "#1d7a1a" },
-      { "text": "JAVASCRIPT", "color": "#e0c910" }
-    ]
-  }
+"labels": [
+  { "id": "lang",  "text": "Languages" },
+  { "id": "fw",    "text": "Frameworks & Runtimes" },
+  { "id": "tools", "text": "Tools & Environment" }
 ]
 ```
 
 | Field | Description |
 |-------|-------------|
-| `id` | Used as the output filename: `assets/sections/{id}.svg` |
-| `label` | Section heading shown above the badges |
-| `badges` | List of badge objects |
-| `badges[].text` | Badge label (displayed in uppercase) |
-| `badges[].color` | Badge background color (hex) |
+| `id` | Used as the output filename: `assets/labels/{id}.svg` |
+| `text` | The label text displayed |
 
-To add a new section, add a new object to the array and add `<img src="assets/sections/{id}.svg"/>` to `README.md`.
+To add a new label, add an object to the array and reference it in `README.md` with `<img src="assets/labels/{id}.svg"/>`.
+
+---
+
+### 📛 Badges
+
+```json
+"badges": [
+  { "text": "C#",         "color": "#1d7a1a" },
+  { "text": "JAVASCRIPT", "color": "#e0c910" }
+]
+```
+
+| Field | Description |
+|-------|-------------|
+| `id` | Used as the output filename: `assets/badges/{id}.svg` |
+| `text` | Badge label displayed on the badge |
+| `color` | Badge background color (hex) |
+
+Badges are standalone inline images — place them anywhere in `README.md` side by side and they will wrap automatically on smaller screens:
+
+```html
+<img src="assets/badges/csharp.svg">
+<img src="assets/badges/javascript.svg">
+```
 
 ---
 
@@ -246,13 +252,13 @@ All generated assets are just image files — place them anywhere in `README.md`
 <br>
 <img src="assets/divider.svg" width="100%"/>
 <div align="center">
-  <img src="assets/sections/lang.svg"/>
-  <br>
-  <br>
-  <img src="assets/sections/fw.svg"/>
-  <br>
-  <br>
-  <img src="assets/sections/tools.svg"/>
+  <img src="assets/labels/lang.svg"/><br>
+  <img src="assets/badges/csharp.svg">
+  <img src="assets/badges/javascript.svg">
+  <br><br>
+  <img src="assets/labels/fw.svg"/><br>
+  <img src="assets/badges/dotnet.svg">
+  <img src="assets/badges/aspnet-core.svg">
 </div>
 <br>
 <img src="assets/footer.svg" width="100%"/>
@@ -265,7 +271,8 @@ All generated assets are just image files — place them anywhere in `README.md`
 | Divider | `assets/divider.svg` |
 | GitHub Stats | `assets/stats.svg` |
 | Top Languages | `assets/langs.svg` |
-| Section (label + badges) | `assets/sections/{id}.svg` |
+| Label | `assets/labels/{id}.svg` |
+| Badge | `assets/badges/{text}.svg` |
 | Footer | `assets/footer.svg` |
 
 <br>

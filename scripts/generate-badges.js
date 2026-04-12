@@ -87,16 +87,16 @@ function buildBadgeSvg(text, color) {
 
 function main() {
   const config = loadConfig();
-  const badges = (config.badges ?? []).filter(b => b && b.text && b.color);
+  const badges = (config.badges ?? []).filter(b => b && b.id && b.text && b.color);
 
   if (!badges.length) { console.error('Error: config.json has no valid badges.'); process.exit(1); }
 
   const outDir = join(__dirname, '..', 'assets', 'badges');
   mkdirSync(outDir, { recursive: true });
 
-  for (const { text, color } of badges) {
-    writeFileSync(join(outDir, `${text}.svg`), buildBadgeSvg(text, color), 'utf8');
-    console.log(`Generated assets/badges/${text}.svg`);
+  for (const { id, text, color } of badges) {
+    writeFileSync(join(outDir, `${id}.svg`), buildBadgeSvg(text, color), 'utf8');
+    console.log(`Generated assets/badges/${id}.svg`);
   }
 }
 
