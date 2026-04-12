@@ -36,6 +36,27 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
   <img src="assets/sections/tools.svg"/>
 </div>
 <br>
+<img src="assets/divider.svg" width="100%"/>
+<div align="center">
+  <img src="assets/labels/lang.svg"/><br>
+  <img src="assets/badges/C%23.svg">
+  <img src="assets/badges/JAVASCRIPT.svg">
+  <img src="assets/badges/HTML5.svg">
+  <img src="assets/badges/CSS3.svg">
+  <br><br>
+  <img src="assets/labels/fw.svg"/><br>
+  <img src="assets/badges/.NET.svg">
+  <img src="assets/badges/ASP.NET%20CORE.svg">
+  <img src="assets/badges/NODE.JS.svg">
+  <br><br>
+  <img src="assets/labels/tools.svg"/><br>
+  <img src="assets/badges/GIT.svg">
+  <img src="assets/badges/GITHUB.svg">
+  <img src="assets/badges/VISUAL%20STUDIO.svg">
+  <img src="assets/badges/VS%20CODE.svg">
+  <img src="assets/badges/CLAUDE%20CODE.svg">
+</div>
+<br>
 <img src="assets/footer.svg" width="100%"/>
 <!-- PROFILE:END -->
 

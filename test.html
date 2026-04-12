@@ -96,6 +96,7 @@
     /* ── PC frame ── */
     .panel-pc { flex: 0 0 auto; }
     .frame-pc {
+      width: var(--readme-max);
       background: var(--readme-bg);
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -128,8 +129,6 @@
       transition: background .2s, border-color .2s;
     }
     .frame-mobile-inner {
-      overflow-y: auto;
-      max-height: 80vh;
       background: var(--readme-bg);
       transition: background .2s;
     }

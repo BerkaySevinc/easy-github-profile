@@ -79,6 +79,29 @@
     }
   ],
 
+  "labels": [
+    { "_generates": "assets/labels/{id}.svg" },
+    { "id": "lang",  "text": "Languages" },
+    { "id": "fw",    "text": "Frameworks & Runtimes" },
+    { "id": "tools", "text": "Tools & Environment" }
+  ],
+
+  "badges": [
+    { "_generates": "assets/badges/{text}.svg" },
+    { "text": "C#",           "color": "#1d7a1a" },
+    { "text": "JAVASCRIPT",   "color": "#e0c910" },
+    { "text": "HTML5",        "color": "#cc4420" },
+    { "text": "CSS3",         "color": "#1262a0" },
+    { "text": ".NET",         "color": "#4d2680" },
+    { "text": "ASP.NET CORE", "color": "#4422bb" },
+    { "text": "NODE.JS",      "color": "#2b802b" },
+    { "text": "GIT",          "color": "#d94229" },
+    { "text": "GITHUB",       "color": "#1c2025" },
+    { "text": "VISUAL STUDIO","color": "#4d2680" },
+    { "text": "VS CODE",      "color": "#0069b3" },
+    { "text": "CLAUDE CODE",  "color": "#bf6a05" }
+  ],
+
   "divider": {
 
     "_generates": "assets/divider.svg",
