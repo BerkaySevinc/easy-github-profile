@@ -7,6 +7,7 @@ const { resolveTheme, loadTheme } = require('./theme');
 
 function main() {
   const { startColor, endColor, fadeMaskStops } = resolveTheme(loadTheme());
+  const syncedAt = new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 160" width="100%" height="100%">
   <defs>
@@ -88,6 +89,18 @@ V 350 H 0 Z">
     letter-spacing="0.5"
     filter="url(#text-shadow)">
     made with BerkaySevinc/easy-github-profile
+  </text>
+
+  <!-- Last synced (also keeps the repo's scheduled workflow from being auto-disabled by GitHub after 60 days without a commit) -->
+  <text x="1460" y="138"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="15"
+    fill="#ffffff"
+    fill-opacity="0.4"
+    text-anchor="end"
+    letter-spacing="0.4"
+    filter="url(#text-shadow)">
+    ${syncedAt}
   </text>
 
 </svg>`;
