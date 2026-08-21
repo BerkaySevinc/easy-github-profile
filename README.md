@@ -46,6 +46,10 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
   <img src="assets/badges/claude-code.svg">
 </div>
 <br>
+<img src="assets/divider.svg" width="100%"/>
+<br>
+<img src="assets/grid.svg" width="100%"/>
+<br>
 <img src="assets/footer.svg" width="100%"/>
 <!-- PROFILE:END -->
 
@@ -178,6 +182,28 @@ No configuration needed — top languages are fetched automatically from your pu
 
 ---
 
+### 🟩 Contribution Grid
+
+```json
+"grid": {
+  "effects": {
+    "matrixRain":   true,
+    "tetrisDropIn": true,
+    "digitFlicker": true
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `effects.matrixRain` | Animated digital-rain beams sweep down through the grid |
+| `effects.tetrisDropIn` | Cells fall into place column by column, with a settle bounce, instead of appearing statically |
+| `effects.digitFlicker` | Active days occasionally flash their own contribution count as a small digit |
+
+Your real contribution calendar, redrawn in a dark phosphor-green grid. Each effect is independent — enable any combination, or set all three to `false` for a plain static grid.
+
+---
+
 ### 🏷️ Labels
 
 ```json
@@ -261,6 +287,12 @@ All generated assets are just image files — place them anywhere in `README.md`
   <img src="assets/badges/aspnet-core.svg">
 </div>
 <br>
+<img src="assets/divider.svg" width="100%"/>
+<br>
+<div align="center">
+  <img src="assets/grid.svg" width="100%"/>
+</div>
+<br>
 <img src="assets/footer.svg" width="100%"/>
 ```
 
@@ -271,6 +303,7 @@ All generated assets are just image files — place them anywhere in `README.md`
 | Divider | `assets/divider.svg` |
 | GitHub Stats | `assets/stats.svg` |
 | Top Languages | `assets/langs.svg` |
+| Contribution Grid | `assets/grid.svg` |
 | Label | `assets/labels/{id}.svg` |
 | Badge | `assets/badges/{text}.svg` |
 | Footer | `assets/footer.svg` |

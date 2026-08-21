@@ -100,6 +100,19 @@
 
   },
 
+  "grid": {
+
+    "_generates": "assets/grid.svg",
+    "_comment": "Contribution graph — real calendar fetched via GitHub GraphQL API. Each effect below is independent and can be combined freely; with all three off, it's a plain static grid.",
+
+    "effects": {
+      "matrixRain":   true,
+      "tetrisDropIn": true,
+      "digitFlicker": true
+    }
+
+  },
+
   "footer": {
 
     "_generates": "assets/footer.svg",
