@@ -2,6 +2,8 @@
 
 A zero-effort GitHub profile README setup. Fork it and your profile is live instantly — fully customizable, no coding required.
 
+⭐ If this saves you time, consider starring the repo.
+
 > 👇 See setup instructions below.
 
 <br>
@@ -98,6 +100,8 @@ Remove any content that doesn't belong on your profile page — the project titl
 ### 4. Trigger the Action
 
 Go to **Actions** → **Generate Assets** → **Run workflow**. Your profile is live. 🎉
+
+> ⭐ If this saved you time, consider starring the repo — new features keep getting added.
 
 ### 5. Customize _(optional)_
 
