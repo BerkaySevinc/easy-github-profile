@@ -2,8 +2,6 @@
 
 A zero-effort GitHub profile README setup. Fork it and your profile is live instantly — fully customizable, no coding required.
 
-⭐ If this saves you time, consider starring the repo.
-
 > 👇 See setup instructions below.
 
 <br>
