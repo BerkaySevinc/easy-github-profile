@@ -99,6 +99,8 @@ Remove any content that doesn't belong on your profile page — the project titl
 
 Go to **Actions** → **Generate Assets** → **Run workflow**. Your profile is live. 🎉
 
+> ℹ️ From now on, your profile updates itself automatically every day and on every push — it always stays in sync with your GitHub activity.
+
 > ⭐ If this saved you time, consider starring the repo — new features keep getting added.
 
 ### 5. Customize _(optional)_
