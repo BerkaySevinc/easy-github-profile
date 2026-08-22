@@ -48,7 +48,8 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 <br>
 <img src="assets/divider.svg" width="100%"/>
 <br>
-<img src="assets/grid.svg" width="100%"/>
+<img src="assets/contribution-graph.svg" width="100%"/>
+<img src="assets/contribution-snake.svg" width="100%"/>
 <br>
 <img src="assets/footer.svg" width="100%"/>
 <!-- PROFILE:END -->
@@ -186,28 +187,6 @@ No configuration needed — top languages are fetched automatically from your pu
 
 ---
 
-### 🟩 Contribution Grid
-
-```json
-"grid": {
-  "effects": {
-    "matrixRain":   true,
-    "tetrisDropIn": true,
-    "digitFlicker": true
-  }
-}
-```
-
-| Field | Description |
-|-------|-------------|
-| `effects.matrixRain` | Animated digital-rain beams sweep down through the grid |
-| `effects.tetrisDropIn` | Cells fall into place column by column, with a settle bounce, instead of appearing statically |
-| `effects.digitFlicker` | Active days occasionally flash their own contribution count as a small digit |
-
-Your real contribution calendar, redrawn in a dark phosphor-green grid. Each effect is independent — enable any combination, or set all three to `false` for a plain static grid.
-
----
-
 ### 🏷️ Labels
 
 ```json
@@ -242,12 +221,35 @@ To add a new label, add an object to the array and reference it in `README.md` w
 | `text` | Badge label displayed on the badge |
 | `color` | Badge background color (hex) |
 
-Badges are standalone inline images — place them anywhere in `README.md` side by side and they will wrap automatically on smaller screens:
+New badges need to be added to `README.md` manually — see the **Editing README.md** section below.
 
-```html
-<img src="assets/badges/csharp.svg">
-<img src="assets/badges/javascript.svg">
+---
+
+### 🟩 Contribution Graph
+
+```json
+"contributionGraph": {
+  "effects": {
+    "matrixRain":   true,
+    "tetrisDropIn": true,
+    "digitFlicker": true
+  }
+}
 ```
+
+| Field | Description |
+|-------|-------------|
+| `effects.matrixRain` | Animated digital-rain beams sweep down through the grid |
+| `effects.tetrisDropIn` | Cells fall into place column by column, with a settle bounce, instead of appearing statically |
+| `effects.digitFlicker` | Active days occasionally flash their own contribution count as a small digit |
+
+Your real contribution calendar, redrawn in a dark phosphor-green grid. Each effect is independent — enable any combination, or set all three to `false` for a plain static grid.
+
+---
+
+### 🐍 Contribution Snake
+
+No configuration needed. A snake eats through your real contribution calendar, growing as it goes, then loops — colors follow your `theme.accent`.
 
 ---
 
@@ -294,7 +296,8 @@ All generated assets are just image files — place them anywhere in `README.md`
 <img src="assets/divider.svg" width="100%"/>
 <br>
 <div align="center">
-  <img src="assets/grid.svg" width="100%"/>
+  <img src="assets/contribution-graph.svg" width="100%"/>
+  <img src="assets/contribution-snake.svg" width="100%"/>
 </div>
 <br>
 <img src="assets/footer.svg" width="100%"/>
@@ -307,7 +310,8 @@ All generated assets are just image files — place them anywhere in `README.md`
 | Divider | `assets/divider.svg` |
 | GitHub Stats | `assets/stats.svg` |
 | Top Languages | `assets/langs.svg` |
-| Contribution Grid | `assets/grid.svg` |
+| Contribution Graph | `assets/contribution-graph.svg` |
+| Contribution Snake | `assets/contribution-snake.svg` |
 | Label | `assets/labels/{id}.svg` |
 | Badge | `assets/badges/{text}.svg` |
 | Footer | `assets/footer.svg` |

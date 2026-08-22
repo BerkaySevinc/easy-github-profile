@@ -34,7 +34,8 @@ jobs:
           node scripts/generate-badges.js
           node scripts/generate-stats.js
           node scripts/generate-langs.js
-          node scripts/generate-grid.js
+          node scripts/generate-graph.js
+          node scripts/generate-snake.js
           node scripts/generate-divider.js
         env:
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -44,5 +45,5 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add assets/header.svg assets/typing.svg assets/footer.svg assets/labels/ assets/badges/ assets/stats.svg assets/langs.svg assets/grid.svg assets/divider.svg
+          git add assets/header.svg assets/typing.svg assets/footer.svg assets/labels/ assets/badges/ assets/stats.svg assets/langs.svg assets/contribution-graph.svg assets/contribution-snake.svg assets/divider.svg
           git diff --staged --quiet || (git commit -m "chore: regenerate assets" && git push origin main)

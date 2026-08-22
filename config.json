@@ -70,13 +70,6 @@
     { "id": "claude-code",   "text": "CLAUDE CODE",  "color": "#bf6a05" }
   ],
 
-  "divider": {
-
-    "_generates": "assets/divider.svg",
-    "_comment": "Thin animated ribbon divider with wavy top and bottom edges — static, no config needed"
-
-  },
-
   "stats": {
 
     "_generates": "assets/stats.svg",
@@ -100,16 +93,30 @@
 
   },
 
-  "grid": {
+  "contributionGraph": {
 
-    "_generates": "assets/grid.svg",
-    "_comment": "Contribution graph — real calendar fetched via GitHub GraphQL API. Each effect below is independent and can be combined freely; with all three off, it's a plain static grid.",
+    "_generates": "assets/contribution-graph.svg",
+    "_comment": "Contribution graph — fetched via GitHub GraphQL API. Effects combine freely.",
 
     "effects": {
       "matrixRain":   true,
       "tetrisDropIn": true,
       "digitFlicker": true
     }
+
+  },
+
+  "contributionSnake": {
+
+    "_generates": "assets/contribution-snake.svg",
+    "_comment": "Snake that eats your contribution graph — static, no JS. Works alongside contributionGraph or on its own."
+
+  },
+
+  "divider": {
+
+    "_generates": "assets/divider.svg",
+    "_comment": "Thin animated ribbon divider with wavy top and bottom edges — static, no config needed"
 
   },
 

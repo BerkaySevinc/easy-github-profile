@@ -65,6 +65,9 @@ async function fetchCalendar(owner, token) {
 
 const CELL = 10, GAP = 2.5, MARGIN = 6;
 const STEP = CELL + GAP;
+// Matches the outside padding used by the snake grid (contribution-snake.svg)
+// so both SVGs share the same cell scale when placed side by side at width=100%.
+const PAD_TOP = 1, PAD_BOTTOM = 1, PAD_LEFT = 1, PAD_RIGHT = 1;
 // Level 0 (no contributions) matches GitHub's own light/dark empty-cell
 // color; levels 1-4 keep the fixed green scale, unchanged either theme.
 const LEVEL0_LIGHT = '#ebedf0';
@@ -75,11 +78,11 @@ const LEVEL_GLOW = [false, false, false, true, true];
 function buildSvg(grid, effects) {
   const WEEKS = grid.length;
   const DAYS = 7;
-  const W = MARGIN * 2 + WEEKS * STEP - GAP;
-  const H = MARGIN * 2 + DAYS * STEP - GAP;
+  const W = MARGIN * 2 + (WEEKS + PAD_LEFT + PAD_RIGHT) * STEP - GAP;
+  const H = MARGIN * 2 + (DAYS + PAD_TOP + PAD_BOTTOM) * STEP - GAP;
 
-  const cx = c => MARGIN + c * STEP + CELL / 2;
-  const cy = r => MARGIN + r * STEP + CELL / 2;
+  const cx = c => MARGIN + PAD_LEFT * STEP + c * STEP + CELL / 2;
+  const cy = r => MARGIN + PAD_TOP * STEP + r * STEP + CELL / 2;
 
   let defs = `<filter id="cell-glow" x="-150%" y="-150%" width="400%" height="400%">
     <feGaussianBlur stdDeviation="0.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
@@ -118,24 +121,38 @@ function buildSvg(grid, effects) {
   // ---- Matrix Rain overlay ----
   if (effects.matrixRain) {
     let beams = '';
-    const used = new Set();
-    const count = Math.min(20, WEEKS);
-    // 9 beams used to be visible 100% of their own loop (no pause), so
-    // that was the average on-screen count at any instant. To go to 20
-    // beams without doubling the apparent density, each beam now only
-    // falls for a DUTY_CYCLE share of its own cycle and sits off-screen,
-    // invisible, for the rest — average visible count stays ~9.
+    // One slot per week/column, so every column has an equal shot at rain
+    // over time — each slot keeps its own column forever, but with this
+    // many of them (each on a different, independently-drifting cycle
+    // length) the set of columns visible together keeps recombining,
+    // instead of a small fixed set of pillars repeating. Density is kept
+    // the same via DUTY_CYCLE regardless of how many weeks there are.
+    const count = WEEKS;
     const TARGET_VISIBLE = 9;
-    const DUTY_CYCLE = TARGET_VISIBLE / count; // 0.45
+    const DUTY_CYCLE = TARGET_VISIBLE / count;
+    // Plain per-beam Math.random() can clump by pure chance — several
+    // columns close together, several start phases near-aligned. Instead,
+    // stratify: split the width into `count` equal slots and the cycle
+    // into `count` equal phase slots, one beam per slot with a small
+    // random jitter inside it — guarantees even spread across both space
+    // and time. Column slots are also shuffled (not paired 1:1 with the
+    // same index as their phase slot), so there's no residual grid-like
+    // correlation between "when" and "where" a beam falls.
+    const colSlots = Array.from({ length: count }, (_, k) => k);
+    for (let k = colSlots.length - 1; k > 0; k--) {
+      const j = Math.floor(Math.random() * (k + 1));
+      [colSlots[k], colSlots[j]] = [colSlots[j], colSlots[k]];
+    }
     for (let i = 0; i < count; i++) {
-      let col;
-      do { col = Math.floor(Math.random() * WEEKS); } while (used.has(col));
-      used.add(col);
+      const col = Math.min(WEEKS - 1, Math.floor((colSlots[i] + Math.random()) * WEEKS / count));
       const x = cx(col);
-      const beamH = H * (0.55 + Math.random() * 0.35);
+      // Shorter beams read as distinct falling drops instead of a solid
+      // bar spanning most of the grid's height.
+      const beamH = H * (0.2 + Math.random() * 0.25);
       const fallDur = 2.6 + Math.random() * 2.4;
       const totalDur = (fallDur / DUTY_CYCLE).toFixed(2);
-      const delay = (-Math.random() * totalDur).toFixed(2);
+      const phase = (i + Math.random()) / count; // 0..1, evenly stratified
+      const delay = (-phase * totalDur).toFixed(2);
       const id = `rain-${i}`;
       beams += `<rect id="${id}" class="rain-beam" x="${(x - 1.1).toFixed(1)}" y="${(-beamH).toFixed(1)}" width="2.2" height="${beamH.toFixed(1)}"/>`;
       style += `#${id}{animation:rain-fall ${totalDur}s linear infinite;animation-delay:${delay}s;}`;
@@ -165,7 +182,22 @@ function buildSvg(grid, effects) {
         .rain-layer { mix-blend-mode: multiply; }
         .rain-beam { fill: url(#rain-grad-light); }
       }`;
-    rainLayer = `<g class="rain-layer">${beams}</g>`;
+    // Fades beams out within the top/bottom padding band (before they reach
+    // the actual cell rows), instead of hard-clipping at the viewBox edge.
+    const topBorder = MARGIN + PAD_TOP * STEP;
+    const bottomBorder = MARGIN + PAD_BOTTOM * STEP;
+    const topPct = (topBorder / H * 100).toFixed(1);
+    const bottomPct = (100 - bottomBorder / H * 100).toFixed(1);
+    defs += `<linearGradient id="rain-fade-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="0"/>
+      <stop offset="${topPct}%" stop-color="white" stop-opacity="1"/>
+      <stop offset="${bottomPct}%" stop-color="white" stop-opacity="1"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="rain-fade-mask">
+      <rect width="${W}" height="${H}" fill="url(#rain-fade-grad)"/>
+    </mask>`;
+    rainLayer = `<g mask="url(#rain-fade-mask)"><g class="rain-layer">${beams}</g></g>`;
   }
 
   // ---- Digit Flicker overlay ----
@@ -207,19 +239,19 @@ async function main() {
 
   const config = loadConfig();
   const effects = {
-    matrixRain: config.grid?.effects?.matrixRain === true,
-    tetrisDropIn: config.grid?.effects?.tetrisDropIn === true,
-    digitFlicker: config.grid?.effects?.digitFlicker === true,
+    matrixRain: config.contributionGraph?.effects?.matrixRain === true,
+    tetrisDropIn: config.contributionGraph?.effects?.tetrisDropIn === true,
+    digitFlicker: config.contributionGraph?.effects?.digitFlicker === true,
   };
 
   const grid = await fetchCalendar(owner, process.env.GITHUB_TOKEN);
 
-  const outPath = join(__dirname, '..', 'assets', 'grid.svg');
+  const outPath = join(__dirname, '..', 'assets', 'contribution-graph.svg');
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, buildSvg(grid, effects), 'utf8');
 
   const active = Object.entries(effects).filter(([, on]) => on).map(([name]) => name);
-  console.log(`Generated assets/grid.svg — ${grid.length} weeks, effects: ${active.length ? active.join(', ') : 'none'}`);
+  console.log(`Generated assets/contribution-graph.svg — ${grid.length} weeks, effects: ${active.length ? active.join(', ') : 'none'}`);
 }
 
 main();
