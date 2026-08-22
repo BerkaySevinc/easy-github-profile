@@ -202,7 +202,7 @@ No configuration needed — top languages are fetched automatically from your pu
 | `id` | Used as the output filename: `assets/labels/{id}.svg` |
 | `text` | The label text displayed |
 
-To add a new label, add an object to the array and reference it in `README.md` with `<img src="assets/labels/{id}.svg"/>`.
+New labels need to be added to `README.md` manually — see the **Editing README.md** section below.
 
 ---
 
