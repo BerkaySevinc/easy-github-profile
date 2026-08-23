@@ -347,3 +347,13 @@ All generated assets are just image files — place them anywhere in `README.md`
 ## 📄 License
 
 MIT © [BerkaySevinc](https://github.com/BerkaySevinc)
+
+<br>
+
+---
+
+<br>
+
+## 🔗 Built With
+
+[BerkaySevinc/easy-github-profile](https://github.com/BerkaySevinc/easy-github-profile)
