@@ -249,7 +249,17 @@ Your real contribution calendar, redrawn in a dark phosphor-green grid. Each eff
 
 ### 🐍 Contribution Snake
 
-No configuration needed. A snake eats through your real contribution calendar, growing as it goes, then loops — colors follow your `theme.accent`.
+```json
+"contributionSnake": {
+  "color": null
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `color` | Hex color for the snake. `null` = uses `theme.accent` instead |
+
+A snake eats through your real contribution calendar, growing as it goes, then loops. The head is a lightened version of the color, fading darker toward the tail.
 
 ---
 

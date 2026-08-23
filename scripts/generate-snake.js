@@ -99,6 +99,12 @@ function lighten(hex, amt) {
   const l = v => Math.round(v + (255 - v) * amt);
   return '#' + [l(r), l(g), l(b)].map(v => v.toString(16).padStart(2, '0')).join('');
 }
+function darken(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const d = v => Math.round(v * (1 - amt));
+  return '#' + [d(r), d(g), d(b)].map(v => v.toString(16).padStart(2, '0')).join('');
+}
 function lerpColor(hexA, hexB, t) {
   const a = parseInt(hexA.slice(1), 16), b = parseInt(hexB.slice(1), 16);
   const l = (av, bv) => Math.round(av + (bv - av) * t);
@@ -339,9 +345,9 @@ function buildSvg(grid, colors) {
   const W = MARGIN * 2 + WEEKS_TOTAL * STEP - GAP;
   const H = MARGIN * 2 + DAYS_TOTAL * STEP - GAP;
 
-  const HEAD_COLOR = lighten(colors.accent, 0.4);
-  const BODY_COLOR = colors.accent;
-  const TAIL_COLOR = colors.dark;
+  const HEAD_COLOR = lighten(colors.base, 0.4);
+  const BODY_COLOR = colors.base;
+  const TAIL_COLOR = darken(colors.base, 0.6);
 
   let style = `:root{--lvl0:${LEVEL0_DARK};}@media (prefers-color-scheme: light){:root{--lvl0:${LEVEL0_LIGHT};}}`;
 
@@ -534,9 +540,9 @@ async function main() {
   }
 
   const config = loadConfig();
+  // contributionSnake.color is independent of theme.gradient — if unset, falls back to theme.accent.
   const colors = {
-    accent: config.theme?.accent ?? '#a78bfa',
-    dark: config.theme?.gradient?.colors?.[1] ?? '#4c1d95',
+    base: config.contributionSnake?.color ?? config.theme?.accent ?? '#a78bfa',
   };
 
   const grid = await fetchCalendar(owner, process.env.GITHUB_TOKEN);
