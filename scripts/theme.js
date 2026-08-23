@@ -1,8 +1,7 @@
 // easy-github-profile — github.com/BerkaySevinc/easy-github-profile
-// Copyright (c) 2025 BerkaySevinc — MIT License
+// Copyright (c) 2026 BerkaySevinc — MIT License
 
-const { readFileSync } = require('fs');
-const { join } = require('path');
+const { loadConfig } = require('./config');
 
 const DEFAULT_GRADIENT_COLORS = ['transparent', 'transparent'];
 const DEFAULT_ACCENT          = { dark: '#e6edf3', light: '#1f2328' };
@@ -112,12 +111,7 @@ function resolveTheme(theme) {
 }
 
 function loadTheme() {
-  try {
-    const config = JSON.parse(readFileSync(join(__dirname, '..', 'config.json'), 'utf8'));
-    return config.theme ?? {};
-  } catch {
-    return {};
-  }
+  return loadConfig().theme ?? {};
 }
 
 module.exports = { resolveTheme, loadTheme };

@@ -61,7 +61,7 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 ## ✨ Features
 
 - **Up in minutes** — just follow the Quick Start steps below, no configuration required
-- **One file to configure** — everything lives in `config.json`, no code to touch
+- **One file to configure** — everything lives in `config.jsonc`, no code to touch
 
 - **Animations** — animated wave header, typewriter effect, and more
 - **Dark/light mode support** — labels automatically adapt to the viewer's theme
@@ -116,7 +116,7 @@ Edit `config.json` to personalize your typing lines, badge sections, colors, and
 
 ## ⚙️ Customize
 
-All customization happens in `config.json`.
+All customization happens in `config.jsonc`.
 
 <br>
 

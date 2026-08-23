@@ -1,20 +1,12 @@
 // easy-github-profile — github.com/BerkaySevinc/easy-github-profile
-// Copyright (c) 2025 BerkaySevinc — MIT License
+// Copyright (c) 2026 BerkaySevinc — MIT License
 
-const { writeFileSync, readFileSync, mkdirSync } = require('fs');
+const { writeFileSync, mkdirSync } = require('fs');
 const { join, dirname } = require('path');
 const { resolveTheme, loadTheme } = require('./theme');
+const { loadConfig } = require('./config');
 
 const MAX_BIO_LENGTH = 80;
-
-function loadConfig() {
-  try {
-    const raw = readFileSync(join(__dirname, '..', 'config.json'), 'utf8');
-    return JSON.parse(raw);
-  } catch {
-    return {};
-  }
-}
 
 async function main() {
   const owner = process.env.GITHUB_REPOSITORY_OWNER;

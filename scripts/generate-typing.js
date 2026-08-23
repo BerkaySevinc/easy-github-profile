@@ -1,24 +1,15 @@
 // easy-github-profile — github.com/BerkaySevinc/easy-github-profile
-// Copyright (c) 2025 BerkaySevinc — MIT License
+// Copyright (c) 2026 BerkaySevinc — MIT License
 
-const { writeFileSync, readFileSync, mkdirSync } = require('fs');
+const { writeFileSync, mkdirSync } = require('fs');
 const { join, dirname } = require('path');
 const { resolveTheme, loadTheme } = require('./theme');
+const { loadConfig } = require('./config');
 
 const CHAR_WIDTH     = 13.2;
 const SVG_WIDTH      = 800;
 const CYCLE_SECS     = 20;
 const CURSOR_OFFSET  = 2;    // px gap between last typed char and cursor
-
-
-function loadConfig() {
-  try {
-    const raw = readFileSync(join(__dirname, '..', 'config.json'), 'utf8');
-    return JSON.parse(raw);
-  } catch {
-    return {};
-  }
-}
 
 function escapeXml(str) {
   return str

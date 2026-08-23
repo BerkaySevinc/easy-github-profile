@@ -1,8 +1,9 @@
 // easy-github-profile — github.com/BerkaySevinc/easy-github-profile
-// Copyright (c) 2025 BerkaySevinc — MIT License
+// Copyright (c) 2026 BerkaySevinc — MIT License
 
-const { writeFileSync, readFileSync, mkdirSync } = require('fs');
+const { writeFileSync, mkdirSync } = require('fs');
 const { join } = require('path');
+const { loadConfig } = require('./config');
 
 const BADGE_H   = 28;
 const GLOW_PAD  = 3;
@@ -11,12 +12,6 @@ const LETTER_SP = 0.8;
 const STRIPE_W  = 7;
 const STRIPE_PAD = 3;
 const BADGE_RX  = 4;
-
-function loadConfig() {
-  try {
-    return JSON.parse(readFileSync(join(__dirname, '..', 'config.json'), 'utf8'));
-  } catch { return {}; }
-}
 
 function escapeXml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -89,7 +84,7 @@ function main() {
   const config = loadConfig();
   const badges = (config.badges ?? []).filter(b => b && b.id && b.text && b.color);
 
-  if (!badges.length) { console.error('Error: config.json has no valid badges.'); process.exit(1); }
+  if (!badges.length) { console.error('Error: config.jsonc has no valid badges.'); process.exit(1); }
 
   const outDir = join(__dirname, '..', 'assets', 'badges');
   mkdirSync(outDir, { recursive: true });

@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/**'
-      - 'config.json'
+      - 'config.jsonc'
       - '.github/workflows/generate.yml'
   schedule:
     - cron: '0 0 * * *'  # Every day at midnight UTC
