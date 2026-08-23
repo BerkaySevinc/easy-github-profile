@@ -82,31 +82,43 @@ A zero-effort GitHub profile README setup. Fork it and your profile is live inst
 
 ## 🚀 Quick Start
 
-### 1. Fork this repository
+### 🍴 1. Fork this repository
 
 Click the **Fork** button at the top right of this page.
 
-### 2. Name the repository `{your-username}`
+<br>
+
+### 🆔 2. Name the repository `{your-username}`
 
 When forking, you can set the name directly. If you missed it, go to **Settings** and rename it there. The name must match your GitHub username exactly for the profile README to work.
 
 > ⚠️ If you already have a `{your-username}` repository, you'll need to delete it first.
 
-### 3. Clean up `README.md`
+<br>
+
+### 🧹 3. Clean up `README.md`
 
 Remove any content that doesn't belong on your profile page — the project title, description, example note, and setup instructions.
 
-### 4. Trigger the Action
+<br>
+
+### ▶️ 4. Trigger the Action
 
 Go to **Actions** → **Generate Assets** → **Run workflow**. Your profile is live. 🎉
 
 > ℹ️ From now on, your profile updates itself automatically every day and on every push — it always stays in sync with your GitHub activity.
 
-> ⭐ If this saved you time, consider starring the repo — new features keep getting added.
+<br>
 
-### 5. Customize _(optional)_
+### ⭐ 5. Star the repo _(optional)_
 
-Edit `config.json` to personalize your typing lines, badge sections, colors, and more. See the [Customize](#%EF%B8%8F-customize) section below for details.
+Enjoying the project? A star helps support the project — and keeps new features coming.
+
+<br>
+
+### ⚙️ 6. Customize _(optional)_
+
+Edit `config.jsonc` to personalize your typing lines, badge sections, colors, and more. See the [Customize](#%EF%B8%8F-customize) section below for details.
 
 <br>
 
