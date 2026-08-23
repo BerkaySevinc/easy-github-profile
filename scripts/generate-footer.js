@@ -91,7 +91,7 @@ V 350 H 0 Z">
     made with BerkaySevinc/easy-github-profile
   </text>
 
-  <!-- Last synced (also keeps the repo's scheduled workflow from being auto-disabled by GitHub after 60 days without a commit) -->
+  <!-- Last synced -->
   <text x="1460" y="138"
     font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
     font-size="15"
