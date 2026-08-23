@@ -1,5 +1,5 @@
 // easy-github-profile — github.com/BerkaySevinc/easy-github-profile
-// Copyright (c) 2025 BerkaySevinc — MIT License
+// Copyright (c) 2026 BerkaySevinc — MIT License
 
 const { writeFileSync, mkdirSync } = require('fs');
 const { join, dirname } = require('path');
