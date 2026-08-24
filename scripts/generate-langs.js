@@ -3,7 +3,7 @@
 
 const { writeFileSync, mkdirSync } = require('fs');
 const { join, dirname } = require('path');
-const { resolveTheme, loadTheme } = require('./theme');
+const { resolveTheme, loadTheme } = require('./lib/theme');
 
 const MAX_LANGS = 6;
 const BAR_X = 20, BAR_Y = 42, BAR_W = 760, BAR_H = 22;

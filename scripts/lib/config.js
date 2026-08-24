@@ -4,9 +4,8 @@
 const { readFileSync } = require('fs');
 const { join } = require('path');
 
-// Strips // and /* */ comments from JSONC text before JSON.parse. Tracks
-// whether we're inside a double-quoted string (respecting \" escapes) so a
-// comment-like sequence inside a string value (e.g. a URL) is never touched.
+// Strips // and /* */ comments from JSONC before JSON.parse, without
+// touching comment-like sequences inside string values.
 function stripJsonComments(text) {
   let out = '';
   let i = 0;
@@ -48,7 +47,7 @@ function stripJsonComments(text) {
 
 function loadConfig() {
   try {
-    const raw = readFileSync(join(__dirname, '..', 'config.jsonc'), 'utf8');
+    const raw = readFileSync(join(__dirname, '..', '..', 'config.jsonc'), 'utf8');
     return JSON.parse(stripJsonComments(raw));
   } catch {
     return {};

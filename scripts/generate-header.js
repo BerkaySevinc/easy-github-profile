@@ -3,8 +3,8 @@
 
 const { writeFileSync, mkdirSync } = require('fs');
 const { join, dirname } = require('path');
-const { resolveTheme, loadTheme } = require('./theme');
-const { loadConfig } = require('./config');
+const { resolveTheme, loadTheme } = require('./lib/theme');
+const { loadConfig } = require('./lib/config');
 
 const MAX_BIO_LENGTH = 80;
 

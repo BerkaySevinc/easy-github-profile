@@ -3,8 +3,8 @@
 
 const { writeFileSync, mkdirSync } = require('fs');
 const { join, dirname } = require('path');
-const { resolveTheme, loadTheme } = require('./theme');
-const { loadConfig } = require('./config');
+const { resolveTheme, loadTheme } = require('./lib/theme');
+const { loadConfig } = require('./lib/config');
 
 const CHAR_WIDTH     = 13.2;
 const SVG_WIDTH      = 800;
@@ -29,12 +29,10 @@ function buildCss(lines) {
   const window = 100 / N;
   let css = '';
 
-  // Clip rect animation class references
   for (let i = 0; i < N; i++) {
     css += `  .cr${i + 1} { animation: cl${i + 1} ${CYCLE_SECS}s infinite; }\n`;
   }
 
-  // Clip rect keyframes
   for (let i = 0; i < N; i++) {
     const n         = i + 1;
     const chars     = lines[i].length;
@@ -54,13 +52,11 @@ function buildCss(lines) {
     css += `  }\n`;
   }
 
-  // Cursor wrapper animation class references
   css += '\n  /* Cursor wrappers — control position and visibility */\n';
   for (let i = 0; i < N; i++) {
     css += `  .cw${i + 1} { animation: cw${i + 1} ${CYCLE_SECS}s infinite; }\n`;
   }
 
-  // Cursor wrapper keyframes
   for (let i = 0; i < N; i++) {
     const n          = i + 1;
     const chars      = lines[i].length;
@@ -88,7 +84,6 @@ function buildCss(lines) {
     css += `  }\n`;
   }
 
-  // Cursor blink
   css += `\n  /* Cursor blink */\n`;
   css += `  .cur { animation: blink 1.2s step-end infinite; }\n`;
   css += `  @keyframes blink {\n`;
@@ -107,21 +102,18 @@ function buildSvgBody(lines) {
 
   let out = '';
 
-  // clipPaths
   out += '<defs>\n';
   for (let i = 0; i < lines.length; i++) {
     out += `  <clipPath id="cp${i + 1}"><rect class="cr${i + 1}" x="${metrics[i].x}" y="0" width="0" height="54"/></clipPath>\n`;
   }
   out += '</defs>\n\n';
 
-  // text elements
   out += '<!-- Text lines -->\n';
   for (let i = 0; i < lines.length; i++) {
     const { x, textLength } = metrics[i];
     out += `<text class="t" clip-path="url(#cp${i + 1})" x="${x}" y="34" textLength="${textLength}" lengthAdjust="spacingAndGlyphs">${escapeXml(lines[i])}</text>\n`;
   }
 
-  // cursor elements
   out += '\n<!-- Cursors -->\n';
   for (let i = 0; i < lines.length; i++) {
     out += `<g class="cw${i + 1}"><rect class="cur" x="${metrics[i].x}" y="16" width="3.5" height="22"/></g>\n`;

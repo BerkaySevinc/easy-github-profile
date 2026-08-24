@@ -3,7 +3,7 @@
 
 const { writeFileSync, mkdirSync } = require('fs');
 const { join } = require('path');
-const { loadConfig } = require('./config');
+const { loadConfig } = require('./lib/config');
 
 const BADGE_H   = 28;
 const GLOW_PAD  = 3;

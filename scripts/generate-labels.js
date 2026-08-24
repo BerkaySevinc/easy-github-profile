@@ -3,8 +3,8 @@
 
 const { writeFileSync, mkdirSync } = require('fs');
 const { join } = require('path');
-const { resolveTheme, loadTheme } = require('./theme');
-const { loadConfig } = require('./config');
+const { resolveTheme, loadTheme } = require('./lib/theme');
+const { loadConfig } = require('./lib/config');
 
 const FONT_SIZE = 15;
 const FONT_W    = 8.5; // approximate px per character at font-size 15, weight 600

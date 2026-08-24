@@ -3,7 +3,7 @@
 
 const { writeFileSync, mkdirSync } = require('fs');
 const { join, dirname } = require('path');
-const { resolveTheme, loadTheme } = require('./theme');
+const { resolveTheme, loadTheme } = require('./lib/theme');
 
 function main() {
   const { startColor, endColor, fadeMaskStops } = resolveTheme(loadTheme());

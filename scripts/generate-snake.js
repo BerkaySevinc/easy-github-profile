@@ -3,7 +3,7 @@
 
 const { writeFileSync, mkdirSync } = require('fs');
 const { join, dirname } = require('path');
-const { loadConfig } = require('./config');
+const { loadConfig } = require('./lib/config');
 
 const CONTRIBUTION_LEVEL = {
   NONE: 0,
