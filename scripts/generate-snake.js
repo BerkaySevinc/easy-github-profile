@@ -59,7 +59,7 @@ const LEVEL_FILL = [null, '#0f5b2c', '#12923f', '#22c95a', '#5dffa0'];
 
 const START_LEN = 4;
 const BODY_LIMIT = 20;
-const STEPS_PER_SEC = 7;
+const STEPS_PER_SEC = 6;
 
 // Length follows a sqrt curve toward BODY_LIMIT, capped at +1 per eaten cell
 // so growth never jumps by more than one unit at a time.
