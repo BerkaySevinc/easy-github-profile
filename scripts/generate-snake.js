@@ -179,9 +179,8 @@ function solveSnake(grid) {
         const key = nx + ',' + ny;
         if (finalized.has(key)) continue;
         const ncell = state[nx][ny];
-        if (ncell.level === null) continue;
         const isTarget = ncell.level === targetLevel && !ncell.eaten;
-        const isWall = !(ncell.level === 0 || ncell.eaten || isTarget);
+        const isWall = !(ncell.level === 0 || ncell.level === null || ncell.eaten || isTarget);
         if (isWall && !allowTunnel) continue;
         const nhops = cur.hops + 1;
         const age = bodyAge.get(key);
@@ -235,8 +234,7 @@ function solveSnake(grid) {
         const key = nx + ',' + ny;
         if (finalized.has(key)) continue;
         const ncell = state[nx][ny];
-        if (ncell.level === null) continue;
-        const isWall = !(ncell.level === 0 || ncell.eaten);
+        const isWall = !(ncell.level === 0 || ncell.level === null || ncell.eaten);
         if (isWall) continue;
         const nhops = cur.hops + 1;
         const age = bodyAge.get(key);
