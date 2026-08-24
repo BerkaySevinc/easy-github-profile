@@ -110,7 +110,10 @@
     // Snake that eats your contribution graph — static, no JS. Works alongside contributionGraph or on its own.
 
     // Hex color for the snake. null = uses theme.accent instead.
-    "color": null
+    "color": null,
+
+    // Speed multiplier. 1 = normal, 2 = twice as fast, 0.5 = half speed. null = normal. Clamped to (0, 3].
+    "speed": 1
 
   },
 

@@ -318,11 +318,12 @@ function collapseCollinear(trail) {
   return stops;
 }
 
-function buildSvg(grid, colors) {
+function buildSvg(grid, colors, speedMultiplier = 1) {
   const solved = solveSnake(grid);
   const { trail, growAt, legCStartIndex, legCEndIndex, eatenCells, WEEKS_TOTAL, DAYS_TOTAL, WEEKS } = solved;
   const lastIdx = trail.length - 1;
-  const totalDuration = trail.length / STEPS_PER_SEC;
+  const stepsPerSec = STEPS_PER_SEC * speedMultiplier;
+  const totalDuration = trail.length / stepsPerSec;
 
   const cx = c => MARGIN + c * STEP + CELL / 2;
   const cy = r => MARGIN + r * STEP + CELL / 2;
@@ -440,7 +441,7 @@ function buildSvg(grid, colors) {
     // Positive delay trails segment n behind the head by n steps (wrapper
     // position only — the shape animation below is already absolute-timed
     // and must not be delayed again).
-    const posDelay = n / STEPS_PER_SEC;
+    const posDelay = n / stepsPerSec;
     if (n === 0) {
       segments += `<g style="will-change:transform;animation:snake-pos ${totalDuration.toFixed(2)}s linear infinite;animation-delay:${posDelay.toFixed(3)}s;">`
         + `<rect x="${(-MAX_SIZE / 2).toFixed(2)}" y="${(-MAX_SIZE / 2).toFixed(2)}" width="${MAX_SIZE}" height="${MAX_SIZE}" rx="${(MAX_SIZE * 0.32).toFixed(2)}" fill="${HEAD_COLOR}"/>`
@@ -532,12 +533,14 @@ async function main() {
   const colors = {
     base: config.contributionSnake?.color ?? config.theme?.accent ?? '#a78bfa',
   };
+  const rawSpeed = config.contributionSnake?.speed;
+  const speedMultiplier = typeof rawSpeed === 'number' && rawSpeed > 0 ? Math.min(rawSpeed, 3) : 1;
 
   const grid = await fetchCalendar(owner, process.env.GITHUB_TOKEN);
 
   const outPath = join(__dirname, '..', 'assets', 'contribution-snake.svg');
   mkdirSync(dirname(outPath), { recursive: true });
-  writeFileSync(outPath, buildSvg(grid, colors), 'utf8');
+  writeFileSync(outPath, buildSvg(grid, colors, speedMultiplier), 'utf8');
 
   console.log(`Generated assets/contribution-snake.svg — ${grid.length} weeks`);
 }
