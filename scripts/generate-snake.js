@@ -58,19 +58,11 @@ const LEVEL0_LIGHT = '#ebedf0', LEVEL0_DARK = '#161b22';
 const LEVEL_FILL = [null, '#0f5b2c', '#12923f', '#22c95a', '#5dffa0'];
 
 const START_LEN = 4;
-const BODY_LIMIT = 30;
-const STEPS_PER_SEC = 6;
+const BODY_LIMIT = 20;
+const STEPS_PER_SEC = 7;
 
-// Length as a function of cells eaten so far, capped so a single eaten cell
-// can never add more than 1 to the length — the sqrt curve below is only an
-// *ideal* target; growth walks toward it one step at a time. When total is
-// small, the ideal curve races far ahead of what a +1-per-step pace could
-// ever reach, so early growth is clamped to a steady +1 per cell instead of
-// jumping by several units at once. Once the steady pace catches up to the
-// (by-then-flattening) ideal curve, growth naturally starts skipping steps
-// to stay on it — which is exactly where "harder to grow" should show up:
-// later, not at the start. eaten=total still lands on exactly BODY_LIMIT,
-// since the ideal curve itself reaches BODY_LIMIT there.
+// Length follows a sqrt curve toward BODY_LIMIT, capped at +1 per eaten cell
+// so growth never jumps by more than one unit at a time.
 const _lenTableCache = new Map();
 function getLenTable(total) {
   if (_lenTableCache.has(total)) return _lenTableCache.get(total);
@@ -114,10 +106,7 @@ function lerpColor(hexA, hexB, t) {
   return `rgb(${r},${g},${bl})`;
 }
 
-// ============================================================
-// Solver — ported from the prototyped/tested snake mechanics.
-// Pure data computation, no DOM, so it runs unchanged at build time.
-// ============================================================
+// Pure data solver — no DOM, runs at build time.
 function solveSnake(grid) {
   const WEEKS = grid.length;
   const DAYS_TOTAL = DAYS + PAD_TOP + PAD_BOTTOM;
@@ -313,15 +302,12 @@ function solveSnake(grid) {
   return { trail, growAt, legCStartIndex, legCEndIndex, eatenCells, totalEatable, WEEKS_TOTAL, DAYS_TOTAL, WEEKS };
 }
 
-// ============================================================
-// Static renderer — bakes the precomputed trail into CSS keyframes,
-// since GitHub renders this as a plain <img>, no JS at runtime.
-// ============================================================
+// Bakes the trail into CSS keyframes — GitHub renders this as a static
+// <img>, no JS at runtime.
 
-// Collapse runs of collinear points down to just their direction-change
-// corners (same trick the reference project uses) — CSS's linear timing
-// function between two keyframe stops already reconstructs the straight
-// run exactly, so keeping every intermediate step would only bloat the file.
+// Collapse straight runs down to direction-change corners — CSS's linear
+// interpolation reconstructs the run exactly, so every intermediate step
+// would just bloat the file.
 function collapseCollinear(trail) {
   const stops = [{ i: 0, x: trail[0].x, y: trail[0].y }];
   for (let i = 1; i < trail.length - 1; i++) {
@@ -370,7 +356,7 @@ function buildSvg(grid, colors) {
       const x = c + PAD_LEFT, y = r + PAD_TOP;
       const px = (cx(x) - CELL / 2).toFixed(1), py = (cy(y) - CELL / 2).toFixed(1);
       if (level === 0) {
-        cells += `<rect x="${px}" y="${py}" width="${CELL}" height="${CELL}" rx="2.4" fill="var(--lvl0)"/>`;
+        cells += `<use href="#cs" x="${px}" y="${py}" fill="var(--lvl0)"/>`;
         continue;
       }
       const key = x + ',' + y;
@@ -389,40 +375,30 @@ function buildSvg(grid, colors) {
         + `${Math.min(100, tReveal + eps + 2.4).toFixed(2)}%{fill:${color};opacity:1;transform:scale(1);}`
         + `100%{fill:${color};opacity:1;transform:scale(1);}`
         + `}`;
-      cells += `<rect x="${px}" y="${py}" width="${CELL}" height="${CELL}" rx="2.4" style="animation:${name} ${totalDuration.toFixed(2)}s linear infinite;transform-box:fill-box;transform-origin:center;"/>`;
+      // Cells are static, so origin can use view-box, computed once at build
+      // time (segments move, so they need fill-box instead — see below).
+      cells += `<use href="#cs" x="${px}" y="${py}" style="will-change:transform;animation:${name} ${totalDuration.toFixed(2)}s linear infinite;transform-box:view-box;transform-origin:${cx(x).toFixed(1)}px ${cy(y).toFixed(1)}px;"/>`;
     }
   }
 
-  // ---- snake position: one shared keyframe (head's own trajectory), reused
-  // by every segment via a negative animation-delay to phase-shift it back
-  // in time — this is the technique that keeps file size sane regardless of
-  // how many segments there are.
+  // One shared position keyframe, reused by every segment via a delayed
+  // animation-delay — keeps file size sane regardless of segment count.
   const posStops = collapseCollinear(trail);
   const originPx = cx(trail[0].x), originPy = cy(trail[0].y);
   style += `@keyframes snake-pos{`
-    + posStops.map(s => `${((s.i / lastIdx) * 100).toFixed(3)}%{transform:translate(${(cx(s.x) - originPx).toFixed(2)}px,${(cy(s.y) - originPy).toFixed(2)}px);}`).join('')
+    + posStops.map(s => `${((s.i / lastIdx) * 100).toFixed(2)}%{transform:translate(${(cx(s.x) - originPx).toFixed(2)}px,${(cy(s.y) - originPy).toFixed(2)}px);}`).join('')
     + `}`;
 
-  // ---- per-segment shape (size/opacity/fill) — segment n's existence and
-  // taper both depend on the *current* body length at that moment, which is
-  // not simply the head's curve shifted in time, so each segment needs its
-  // own curve here. bodyLenAtStep rises (monotonically) through the whole
-  // eating phase then falls (monotonically) through leg C, so for a given n
-  // there's exactly one contiguous "alive" window — find its exact edges by
-  // binary search and sample *inside* that window only. Sampling evenly
-  // across the whole cycle instead (as this used to) starves the birth
-  // moment of resolution — the sqrt growth curve is steepest right at
-  // birth, so a multi-second gap between samples there shows up as the
-  // segment appearing to have already grown large the instant it exists.
+  // Per-segment size/color: each segment's alive window is found by binary
+  // search, then sampled only inside it — even sampling across the whole
+  // cycle would starve the birth moment, where the growth curve is steepest.
   const MIN_SIZE = CELL * 0.28, MAX_SIZE = CELL;
 
   const cumEaten = new Array(trail.length);
   { let e = 0; for (let i = 0; i < trail.length; i++) { if (growAt[i]) e++; cumEaten[i] = e; } }
 
-  // Rounded to an integer, same as the solver's own bodyAgeMap — leaving it
-  // as a raw float let tt = n/(len-1) exceed 1 whenever len landed strictly
-  // between n and n+1, shrinking that segment below its real minimum size
-  // right at the moment it's born.
+  // Rounded to match bodyAgeMap — a raw float let tt = n/(len-1) exceed 1,
+  // shrinking a segment below its minimum size right at birth.
   function bodyLenAtStep(i) {
     let raw;
     if (i <= legCStartIndex) raw = bodyLenAt(cumEaten[i], solved.totalEatable);
@@ -463,70 +439,84 @@ function buildSvg(grid, colors) {
   const segCount = Math.min(Math.round(bodyLenAt(solved.totalEatable, solved.totalEatable)), BODY_LIMIT);
 
   for (let n = 0; n < segCount; n++) {
-    // Positive delay: CSS's negative-delay convention fast-forwards an
-    // animation, so to make segment n show the head's position from n
-    // steps *in the past* (trailing behind, not leading ahead of it) the
-    // delay must be positive — this is the wrapper's position only; the
-    // shape animation below is already expressed in absolute cycle time
-    // and must NOT be delayed again, or its timing drifts out of sync
-    // with when cells actually get eaten.
+    // Positive delay trails segment n behind the head by n steps (wrapper
+    // position only — the shape animation below is already absolute-timed
+    // and must not be delayed again).
     const posDelay = n / STEPS_PER_SEC;
     if (n === 0) {
-      segments += `<g style="animation:snake-pos ${totalDuration.toFixed(2)}s linear infinite;animation-delay:${posDelay.toFixed(3)}s;">`
+      segments += `<g style="will-change:transform;animation:snake-pos ${totalDuration.toFixed(2)}s linear infinite;animation-delay:${posDelay.toFixed(3)}s;">`
         + `<rect x="${(-MAX_SIZE / 2).toFixed(2)}" y="${(-MAX_SIZE / 2).toFixed(2)}" width="${MAX_SIZE}" height="${MAX_SIZE}" rx="${(MAX_SIZE * 0.32).toFixed(2)}" fill="${HEAD_COLOR}"/>`
         + `</g>`;
       continue;
     }
     const birth = findBirth(n);
     const death = findDeath(n);
-    const eps = 0.02;
     const pctOf = i => (i / lastIdx) * 100;
 
     const stopList = [];
-    if (birth > 0) {
-      stopList.push([0, 'opacity:0;transform:scale(0);']);
-      stopList.push([Math.max(0.001, pctOf(birth) - eps), 'opacity:0;transform:scale(0);']);
-    }
-    // Emit a stop at every step where the rounded body length actually
-    // changes, rather than at N evenly-spaced targets — real eating pace
-    // is uneven (a handful of cells eaten in quick succession early on can
-    // jump the length by several units in one step, with nothing in
-    // between to sample), so target-based sampling could land two kept
-    // stops many real seconds apart with nothing between them, and CSS
-    // would linearly smear that instant jump across the whole gap. Walking
-    // every step and only keeping actual value changes reproduces the true
-    // step function exactly, snap and all, with no smearing — and the
-    // count is naturally bounded by how many eat-events fall inside this
-    // segment's own alive window, not by the size of the grid.
+    if (birth > 0) stopList.push([0, 'opacity:0;transform:scale(0);']);
+
+    // A stop at every step where the rounded body length actually changes
+    // (not N evenly-spaced samples) — eating pace is uneven, so even
+    // sampling could miss bursts of several eat-events in a row.
     const aliveEnd = death != null ? death - 1 : lastIdx;
+    const events = [];
     let prevLen = null;
     for (let i = birth; i <= aliveEnd; i++) {
       const len = bodyLenAtStep(i);
       if (len === prevLen) continue;
       prevLen = len;
-      const { scale, fill } = shapeAt(n, i);
-      stopList.push([pctOf(i), `opacity:1;transform:scale(${scale.toFixed(3)});fill:${fill};`]);
+      events.push({ pct: pctOf(i), ...shapeAt(n, i) });
     }
-    if (stopList[stopList.length - 1][0] < pctOf(aliveEnd)) {
-      const { scale, fill } = shapeAt(n, aliveEnd);
-      stopList.push([pctOf(aliveEnd), `opacity:1;transform:scale(${scale.toFixed(3)});fill:${fill};`]);
+    if (!events.length || events[events.length - 1].pct < pctOf(aliveEnd)) {
+      events.push({ pct: pctOf(aliveEnd), ...shapeAt(n, aliveEnd) });
+    }
+
+    // React to eating rather than anticipate it: hold, then ramp to the new
+    // value over at most HOLD_CAP seconds — otherwise a late-cycle gap
+    // between eat-events (growth flattens near the end) gets smeared across
+    // the whole gap, repainting every frame for a change nobody can see.
+    // Birth/death reuse the same ramp for appearing/vanishing.
+    const HOLD_CAP = 0.3;
+    const capPct = (HOLD_CAP / totalDuration) * 100;
+    const styleOf = e => `opacity:1;transform:scale(${e.scale.toFixed(2)});fill:${e.fill};`;
+    const pushStop = (pct, s) => {
+      const last = stopList[stopList.length - 1];
+      if (last && last[0] === pct && last[1] === s) return;
+      stopList.push([pct, s]);
+    };
+
+    if (birth > 0) {
+      const nextPct = events.length > 1 ? events[1].pct : pctOf(aliveEnd);
+      pushStop(events[0].pct, 'opacity:0;transform:scale(0);');
+      pushStop(Math.min(events[0].pct + capPct, nextPct), styleOf(events[0]));
+    } else {
+      pushStop(events[0].pct, styleOf(events[0]));
+    }
+    for (let k = 1; k < events.length; k++) {
+      const prevEvt = events[k - 1], curEvt = events[k];
+      const nextPct = k + 1 < events.length ? events[k + 1].pct : pctOf(aliveEnd);
+      pushStop(curEvt.pct, styleOf(prevEvt));
+      pushStop(Math.min(curEvt.pct + capPct, nextPct), styleOf(curEvt));
     }
     if (death != null) {
-      stopList.push([Math.min(100, pctOf(death) + eps), 'opacity:0;transform:scale(0);']);
-      if (death < lastIdx) stopList.push([100, 'opacity:0;transform:scale(0);']);
+      const deathPct = pctOf(death);
+      pushStop(deathPct, stopList[stopList.length - 1][1]);
+      pushStop(Math.min(deathPct + capPct, 100), 'opacity:0;transform:scale(0);');
+      pushStop(100, 'opacity:0;transform:scale(0);');
     }
 
     let kf = '';
-    for (const [pct, bit] of stopList) kf += `${pct.toFixed(3)}%{${bit}}`;
+    for (const [pct, bit] of stopList) kf += `${pct.toFixed(2)}%{${bit}}`;
     const name = `seg${n}`;
     style += `@keyframes ${name}{${kf}}`;
-    segments += `<g style="animation:snake-pos ${totalDuration.toFixed(2)}s linear infinite;animation-delay:${posDelay.toFixed(3)}s;">`
-      + `<rect x="${(-MAX_SIZE / 2).toFixed(2)}" y="${(-MAX_SIZE / 2).toFixed(2)}" width="${MAX_SIZE}" height="${MAX_SIZE}" rx="${(MAX_SIZE * 0.32).toFixed(2)}" fill="${BODY_COLOR}" style="animation:${name} ${totalDuration.toFixed(2)}s linear infinite;transform-box:fill-box;transform-origin:center;"/>`
+    segments += `<g style="will-change:transform;animation:snake-pos ${totalDuration.toFixed(2)}s linear infinite;animation-delay:${posDelay.toFixed(3)}s;">`
+      + `<rect x="${(-MAX_SIZE / 2).toFixed(2)}" y="${(-MAX_SIZE / 2).toFixed(2)}" width="${MAX_SIZE}" height="${MAX_SIZE}" rx="${(MAX_SIZE * 0.32).toFixed(2)}" fill="${BODY_COLOR}" style="will-change:transform;animation:${name} ${totalDuration.toFixed(2)}s linear infinite;transform-box:fill-box;transform-origin:center;"/>`
       + `</g>`;
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" width="100%" height="100%">
-  <defs><style>${style}</style></defs>
+  <defs><rect id="cs" width="${CELL}" height="${CELL}" rx="2.4"/><style>${style}</style></defs>
   ${cells}
   <g transform="translate(${originPx.toFixed(2)},${originPy.toFixed(2)})">${segments}</g>
 </svg>`;
