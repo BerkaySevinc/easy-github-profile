@@ -146,11 +146,24 @@ function solveSnake(grid) {
     return { map, len };
   }
 
-  function weightedNearestTarget(targetLevel, allowTunnel) {
+  // Full Dijkstra from the head, blocked by walls (other uneaten levels) —
+  // never crosses one, but will step on the snake's own body as a last
+  // resort. dist is BIG-dominant (prefers a body-free route to a given
+  // cell when one exists, however much longer) — internal routing only.
+  // hopsOf holds the REAL number of steps the resulting route actually
+  // takes, used for cross-cell distance comparisons in weightedNearestTarget
+  // below, so a cell that only needed one quick step across the body isn't
+  // reported as if it were hundreds of steps away.
+  function reachability(targetLevel) {
     const { map: bodyAge, len: bodyLen } = bodyAgeMap();
-    const BIG = 1e6;
+    // Just needs to exceed the longest possible real path (a simple path can
+    // never revisit a cell, so it can't exceed the grid's own cell count) —
+    // that alone guarantees a body-free route always outweighs a shorter one
+    // that touches the body, no matter how much longer the detour is.
+    const BIG = WEEKS_TOTAL * DAYS_TOTAL + 1;
     const startKey = head.x + ',' + head.y;
     const dist = new Map([[startKey, 0]]);
+    const hopsOf = new Map([[startKey, 0]]);
     const prev = new Map();
     const coordOf = new Map([[startKey, { x: head.x, y: head.y }]]);
     const finalized = new Set();
@@ -164,14 +177,66 @@ function solveSnake(grid) {
       if (finalized.has(cur.key)) continue;
       finalized.add(cur.key);
 
-      const cell = state[cur.x][cur.y];
-      if (cell.level === targetLevel && !cell.eaten && cur.key !== startKey) {
-        const path = [];
-        let k = cur.key;
-        while (k !== startKey) { path.push(coordOf.get(k)); k = prev.get(k); }
-        path.reverse();
-        return path;
+      for (const [dx, dy] of dirs) {
+        const nx = cur.x + dx, ny = cur.y + dy;
+        if (nx < 0 || nx >= WEEKS_TOTAL || ny < 0 || ny >= DAYS_TOTAL) continue;
+        const key = nx + ',' + ny;
+        if (finalized.has(key)) continue;
+        const ncell = state[nx][ny];
+        const isTarget = ncell.level === targetLevel && !ncell.eaten;
+        const isWall = !(ncell.level === 0 || ncell.level === null || ncell.eaten || isTarget);
+        if (isWall) continue;
+        const nhops = cur.hops + 1;
+        const age = bodyAge.get(key);
+        const stillOccupied = age !== undefined && nhops < bodyLen - age;
+        const bodyCost = stillOccupied ? 1 : 0;
+        const nd = cur.d + bodyCost * BIG + 1;
+        if (!dist.has(key) || nd < dist.get(key)) {
+          dist.set(key, nd);
+          hopsOf.set(key, nhops);
+          prev.set(key, cur.key);
+          coordOf.set(key, { x: nx, y: ny });
+          pq.push({ key, x: nx, y: ny, d: nd, hops: nhops });
+        }
       }
+    }
+    return { dist, hopsOf, prev, coordOf };
+  }
+
+  // Full Dijkstra from the head, allowed to cross walls (tunnel) — but
+  // minimizing wall crossings first, hop count only as a tie-break among
+  // routes tied on wall count. hopsOf holds the REAL number of steps that
+  // route actually takes, used for cross-cell distance comparisons in
+  // weightedNearestTarget below — not an estimate, the true walked length,
+  // so a cell chosen as "nearest" is never secretly farther once the
+  // wall-minimal route to it turns out longer than its hop-only distance
+  // would have suggested.
+  function reachabilityMinWalls(targetLevel) {
+    const { map: bodyAge, len: bodyLen } = bodyAgeMap();
+    // Exact integer lexicographic ordering, three tiers: wall count first,
+    // own-body crossings second, hop count third. Each tier's multiplier is
+    // sized so it can never be overtaken by any possible combination of the
+    // tiers below it — MAX_HOPS bounds any single tier's raw count (hops,
+    // walls, or body-hits can't exceed the grid's cell count), so a lower
+    // tier's worst case (MAX_HOPS-1) times its own multiplier still can't
+    // reach one unit of the tier above.
+    const MAX_HOPS = WEEKS_TOTAL * DAYS_TOTAL + 1;
+    const BIG = MAX_HOPS * MAX_HOPS;
+    const startKey = head.x + ',' + head.y;
+    const dist = new Map([[startKey, 0]]);
+    const hopsOf = new Map([[startKey, 0]]);
+    const prev = new Map();
+    const coordOf = new Map([[startKey, { x: head.x, y: head.y }]]);
+    const finalized = new Set();
+    const pq = [{ key: startKey, x: head.x, y: head.y, d: 0, hops: 0, walls: 0, bodyHits: 0 }];
+    const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+
+    while (pq.length) {
+      let bi = 0;
+      for (let i = 1; i < pq.length; i++) if (pq[i].d < pq[bi].d) bi = i;
+      const cur = pq.splice(bi, 1)[0];
+      if (finalized.has(cur.key)) continue;
+      finalized.add(cur.key);
 
       for (const [dx, dy] of dirs) {
         const nx = cur.x + dx, ny = cur.y + dy;
@@ -181,23 +246,59 @@ function solveSnake(grid) {
         const ncell = state[nx][ny];
         const isTarget = ncell.level === targetLevel && !ncell.eaten;
         const isWall = !(ncell.level === 0 || ncell.level === null || ncell.eaten || isTarget);
-        if (isWall && !allowTunnel) continue;
         const nhops = cur.hops + 1;
+        const nwalls = cur.walls + (isWall ? 1 : 0);
         const age = bodyAge.get(key);
         const stillOccupied = age !== undefined && nhops < bodyLen - age;
-        const wallCost = isWall ? 1 : 0;
-        const bodyCost = stillOccupied ? 1 : 0;
-        const stepCost = wallCost * BIG * BIG + bodyCost * BIG + 1;
-        const nd = cur.d + stepCost;
+        const nBodyHits = cur.bodyHits + (stillOccupied ? 1 : 0);
+        const nd = nwalls * BIG + nBodyHits * MAX_HOPS + nhops;
         if (!dist.has(key) || nd < dist.get(key)) {
           dist.set(key, nd);
+          hopsOf.set(key, nhops);
           prev.set(key, cur.key);
           coordOf.set(key, { x: nx, y: ny });
-          pq.push({ key, x: nx, y: ny, d: nd, hops: nhops });
+          pq.push({ key, x: nx, y: ny, d: nd, hops: nhops, walls: nwalls, bodyHits: nBodyHits });
         }
       }
     }
-    return null;
+    return { hopsOf, prev, coordOf };
+  }
+
+  // A tunnel route to a given cell never loses to a real (non-tunnel) route
+  // to that SAME cell, no matter how much shorter tunneling would be — but
+  // across DIFFERENT cells, real walked distance alone decides: a cell only
+  // forced to use a tunnel isn't unfairly ranked behind a much farther
+  // walk-only one, and isn't unfairly favored either — its cost is the true
+  // length of the wall-minimal route it will actually take.
+  function weightedNearestTarget(targetLevel) {
+    const startKey = head.x + ',' + head.y;
+    const open = reachability(targetLevel);
+    const tunneled = reachabilityMinWalls(targetLevel);
+
+    let bestKey = null, bestCost = Infinity, bestSearch = null;
+    for (let x = 0; x < WEEKS_TOTAL; x++) {
+      for (let y = 0; y < DAYS_TOTAL; y++) {
+        const cell = state[x][y];
+        if (cell.level !== targetLevel || cell.eaten) continue;
+        const key = x + ',' + y;
+        if (key === startKey) continue;
+        const search = open.dist.has(key) ? open : (tunneled.hopsOf.has(key) ? tunneled : null);
+        if (!search) continue;
+        const cost = search.hopsOf.get(key);
+        // On an exact tie, the non-tunnel option wins — distance decided
+        // fairly either way, this just picks a side instead of leaving it
+        // to grid scan order.
+        const better = cost < bestCost || (cost === bestCost && search === open && bestSearch === tunneled);
+        if (better) { bestCost = cost; bestKey = key; bestSearch = search; }
+      }
+    }
+    if (bestKey === null) return null;
+
+    const path = [];
+    let k = bestKey;
+    while (k !== startKey) { path.push(bestSearch.coordOf.get(k)); k = bestSearch.prev.get(k); }
+    path.reverse();
+    return path;
   }
 
   function pathToPoint(toX, toY, forbidTop, confineTop) {
@@ -261,8 +362,7 @@ function solveSnake(grid) {
     for (let c = 0; c < WEEKS_TOTAL; c++) for (let y = 0; y < DAYS_TOTAL; y++) if (state[c][y].level === level) remaining++;
 
     while (remaining > 0) {
-      let path = weightedNearestTarget(level, false);
-      if (!path) path = weightedNearestTarget(level, true);
+      const path = weightedNearestTarget(level);
       if (!path) break;
 
       for (const step of path) {
