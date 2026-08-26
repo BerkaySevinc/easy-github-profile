@@ -383,41 +383,66 @@ function solveSnake(grid) {
     return best;
   }
 
-  // Finishes a level to completion inside ctx (mutating it), always via the
-  // fast tie-break — used both for the real run continuing after a
-  // branch-simulated pick, and as the "future" a simulated branch plays out
-  // to compare candidates fairly.
-  function runLevelFast(ctx, targetLevel, remainingRef, growAtOut) {
-    let crossings = 0;
-    while (remainingRef.value > 0) {
-      const cand = pickBestFast(ctx, targetLevel);
-      if (!cand) break;
-      const path = buildPathTo(ctx, cand);
-      crossings += applyPath(ctx, path, targetLevel, remainingRef, growAtOut);
+  // Runs ctx forward via the fast (non-branching) pick — this level, then
+  // every level after it — until a step crosses the snake's own body, or
+  // every remaining level is fully eaten. Stops at the FIRST crossing
+  // instead of running to completion and counting every one, so each
+  // simulated branch below is usually far cheaper. Returns the number of
+  // real hops walked before that first crossing, or Infinity if none was
+  // ever hit.
+  function runUntilFirstCross(ctx, fromLevel, remaining) {
+    let steps = 0;
+    let level = fromLevel;
+    let remainingRef = { value: remaining };
+    while (level <= 4) {
+      while (remainingRef.value > 0) {
+        const cand = pickBestFast(ctx, level);
+        if (!cand) break;
+        const path = buildPathTo(ctx, cand);
+        const crossed = applyPath(ctx, path, level, remainingRef, null);
+        steps += path.length;
+        if (crossed) return steps;
+      }
+      level++;
+      if (level > 4) break;
+      remainingRef = { value: 0 };
+      for (let x = 0; x < WEEKS_TOTAL; x++) for (let y = 0; y < DAYS_TOTAL; y++) {
+        if (ctx.state[x][y].level === level && !ctx.state[x][y].eaten) remainingRef.value++;
+      }
     }
-    return crossings;
+    return Infinity;
   }
 
-  // Picks the next cell to eat. When several tie for best, simulates
-  // finishing the rest of THIS level starting from each tied option (on a
-  // cloned, throwaway copy of the state) and keeps whichever leads to fewer
-  // further self-crossings — capped to one level of real branching; ties
-  // found inside a simulated branch resolve via the fast, non-branching
-  // pick above so cost stays bounded instead of exploding combinatorially.
+  // Picks the next cell to eat. When several tie for best, simulates each
+  // tied option (on a cloned, throwaway copy of the state) forward — this
+  // level, then every level after it — and keeps whichever stays
+  // self-crossing-free the longest (or never crosses at all) — capped to
+  // one level of real branching; ties found inside a simulated branch
+  // resolve via the fast, non-branching pick above so cost stays bounded
+  // instead of exploding combinatorially. Simulating only to the end of
+  // THIS level isn't enough: a tie among the last cells of a level doesn't
+  // change how many of them get eaten (all tied cells get eaten either
+  // way), only the order — but that order decides where the head ends up
+  // when the level finishes, which is exactly what determines the next
+  // level's starting point and its crossings. Doesn't reach past the last
+  // level into the exit/return legs (pathToPoint), which sit outside this
+  // ctx/candidate system.
   function pickBestWithLookahead(ctx, targetLevel, remaining) {
     const candidates = collectBestCandidates(ctx, targetLevel);
     if (candidates.length <= 1) return candidates[0] || null;
 
-    let bestCand = null, bestCrossings = Infinity, bestHash = Infinity;
+    let bestCand = null, bestSafeSteps = -Infinity, bestHash = Infinity;
     for (const cand of candidates) {
       const simCtx = cloneCtx(ctx);
       const path = buildPathTo(simCtx, cand);
       const remainingRef = { value: remaining };
-      let crossings = applyPath(simCtx, path, targetLevel, remainingRef, null);
-      crossings += runLevelFast(simCtx, targetLevel, remainingRef, null);
+      const crossedFirst = applyPath(simCtx, path, targetLevel, remainingRef, null);
+      const safeSteps = crossedFirst
+        ? path.length
+        : path.length + runUntilFirstCross(simCtx, targetLevel, remainingRef.value);
       const hash = hashTieBreak(ctx, cand.x, cand.y);
-      if (crossings < bestCrossings || (crossings === bestCrossings && hash < bestHash)) {
-        bestCrossings = crossings; bestCand = cand; bestHash = hash;
+      if (safeSteps > bestSafeSteps || (safeSteps === bestSafeSteps && hash < bestHash)) {
+        bestSafeSteps = safeSteps; bestCand = cand; bestHash = hash;
       }
     }
     return bestCand;
