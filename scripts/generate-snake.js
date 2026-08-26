@@ -441,9 +441,16 @@ function buildSvg(grid, colors, speedMultiplier = 1) {
   for (let k = 0; k < trail.length; k++) if (growAt[k]) eatenIndexOf.set(trail[k].x + ',' + trail[k].y, k);
 
   const legCFinishSpan = Math.max(1, (legCEndIndex - legCStartIndex) - 1);
+
+  // Reveal pop-in takes POP_DUR_SEC real seconds — reserve 1.5x that (in
+  // steps) off the end of the return leg so every cell's pop finishes
+  // before the loop wraps, instead of only the last few getting cut off.
+  const POP_DUR_SEC = 0.4;
+  const revealReserve = POP_DUR_SEC * stepsPerSec * 1.5;
+  const revealSpan = Math.max(1, legCFinishSpan - revealReserve);
   const revealIndexOf = new Map();
   eatenCells.forEach((p, m) => {
-    revealIndexOf.set(p.x + ',' + p.y, legCStartIndex + (m / eatenCells.length) * legCFinishSpan);
+    revealIndexOf.set(p.x + ',' + p.y, legCStartIndex + (m / eatenCells.length) * revealSpan);
   });
 
   let cells = '';
@@ -464,14 +471,18 @@ function buildSvg(grid, colors, speedMultiplier = 1) {
       const color = LEVEL_FILL[level];
       const name = `cg${cellAnimId++}`;
       const eps = 0.03;
+      // Pop-in spans POP_DUR_SEC total: growPct to the overshoot, the rest
+      // settling back down — same 2:1 ratio as the original fixed offsets.
+      const popPct = (POP_DUR_SEC / totalDuration) * 100;
+      const growPct = popPct * (2 / 3);
       style += `@keyframes ${name}{`
         + `0%{fill:${color};opacity:1;transform:scale(1);}`
         + `${(tEaten).toFixed(2)}%{fill:${color};opacity:1;transform:scale(1);}`
         + `${(tEaten + eps).toFixed(2)}%{fill:var(--lvl0);opacity:1;transform:scale(1);}`
         + `${(tReveal).toFixed(2)}%{fill:var(--lvl0);opacity:1;transform:scale(1);}`
         + `${(tReveal + eps).toFixed(2)}%{fill:${color};opacity:0;transform:scale(0.2);}`
-        + `${Math.min(100, tReveal + eps + 1.6).toFixed(2)}%{fill:${color};opacity:1;transform:scale(1.12);}`
-        + `${Math.min(100, tReveal + eps + 2.4).toFixed(2)}%{fill:${color};opacity:1;transform:scale(1);}`
+        + `${Math.min(100, tReveal + eps + growPct).toFixed(2)}%{fill:${color};opacity:1;transform:scale(1.12);}`
+        + `${Math.min(100, tReveal + eps + popPct).toFixed(2)}%{fill:${color};opacity:1;transform:scale(1);}`
         + `100%{fill:${color};opacity:1;transform:scale(1);}`
         + `}`;
       // Cells are static, so origin can use view-box, computed once at build
@@ -497,12 +508,15 @@ function buildSvg(grid, colors, speedMultiplier = 1) {
   { let e = 0; for (let i = 0; i < trail.length; i++) { if (growAt[i]) e++; cumEaten[i] = e; } }
 
   // Rounded to match bodyAgeMap — a raw float let tt = n/(len-1) exceed 1,
-  // shrinking a segment below its minimum size right at birth.
+  // shrinking a segment below its minimum size right at birth. The
+  // return-leg shrink reaches START_LEN by the end of revealSpan (the same
+  // window the cell reveals use), not the full return leg, so tail
+  // segments finish vanishing with the same safety margin the pops get.
   function bodyLenAtStep(i) {
     let raw;
     if (i <= legCStartIndex) raw = bodyLenAt(cumEaten[i], solved.totalEatable);
     else {
-      const p = Math.min(1, (i - legCStartIndex) / legCFinishSpan);
+      const p = Math.min(1, (i - legCStartIndex) / revealSpan);
       const full = bodyLenAt(solved.totalEatable, solved.totalEatable);
       raw = full + (START_LEN - full) * p;
     }
@@ -518,24 +532,46 @@ function buildSvg(grid, colors, speedMultiplier = 1) {
     }
     return lo;
   }
-  function findDeath(n) {
-    if (bodyLenAtStep(legCEndIndex) > n) return null; // never dies
-    let lo = legCStartIndex, hi = legCEndIndex;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (bodyLenAtStep(mid) <= n) hi = mid; else lo = mid + 1;
-    }
-    return lo;
+  // Shared by both the growth phase (shapeAt, below) and the return-leg
+  // checkpoint loop — same formula for a segment's shape given any body
+  // length, real or virtual, so shrinking uses the exact same curve as
+  // growing instead of a separately hardcoded one.
+  function shapeForLen(n, len) {
+    // Past the current body length entirely (only possible during the
+    // return-leg shrink, as len counts down) — this index isn't part of
+    // the body at all anymore, so it's fully gone. The short-body floor
+    // below only applies to segments that ARE part of the body; applying
+    // it here would leave a departed segment stuck at a visible size.
+    if (n >= len) return { scale: 0, fill: TAIL_COLOR, tt: 1 };
+    // Anchored at the head end, not the tail: the segment right after the
+    // head is always exactly BODY_COLOR, and the tail tip only approaches
+    // TAIL_COLOR asymptotically as len grows — never quite reaching it for
+    // short bodies, instead of the tail tip being forced there always.
+    const tt = len <= 1 ? 0 : (n - 1) / (len - 1);
+    // Short bodies get a gentler floor for the tail — full MAX_SIZE at 1
+    // segment, ramping linearly down to MIN_SIZE by 10 segments and
+    // staying there above that. Same quadratic curve shape either way,
+    // just a shallower range.
+    const floorT = Math.min(1, Math.max(0, (len - 1) / 9));
+    const minForLen = MAX_SIZE - (MAX_SIZE - MIN_SIZE) * floorT;
+    const size = MAX_SIZE - (MAX_SIZE - minForLen) * (tt * tt);
+    return { scale: size / MAX_SIZE, fill: lerpColor(BODY_COLOR, TAIL_COLOR, tt), tt };
   }
   function shapeAt(n, i) {
-    const len = bodyLenAtStep(i);
-    const tt = len <= 1 ? 0 : n / (len - 1);
-    const size = MAX_SIZE - (MAX_SIZE - MIN_SIZE) * (tt * tt);
-    return { scale: size / MAX_SIZE, fill: lerpColor(BODY_COLOR, TAIL_COLOR, tt) };
+    return shapeForLen(n, bodyLenAtStep(i));
   }
 
   let segments = '';
   const segCount = Math.min(Math.round(bodyLenAt(solved.totalEatable, solved.totalEatable)), BODY_LIMIT);
+  const pctOf = i => (i / lastIdx) * 100;
+
+  // Tail-fade: excess segments (beyond the final body length) each get an
+  // equal, contiguous slice of the shared window (tail-most first), and
+  // drop straight from their held shape to gone — a plain 2-point linear
+  // scale-down, not a sampled curve, so there's no stepping.
+  const finalLen = bodyLenAtStep(legCEndIndex);
+  const dyingCount = Math.max(0, segCount - finalLen);
+  const tailFadeSliceSteps = dyingCount > 0 ? revealSpan / dyingCount : 0;
 
   for (let n = 0; n < segCount; n++) {
     // Positive delay trails segment n behind the head by n steps (wrapper
@@ -549,16 +585,16 @@ function buildSvg(grid, colors, speedMultiplier = 1) {
       continue;
     }
     const birth = findBirth(n);
-    const death = findDeath(n);
-    const pctOf = i => (i / lastIdx) * 100;
 
     const stopList = [];
     if (birth > 0) stopList.push([0, 'opacity:0;transform:scale(0);']);
 
     // A stop at every step where the rounded body length actually changes
     // (not N evenly-spaced samples) — eating pace is uneven, so even
-    // sampling could miss bursts of several eat-events in a row.
-    const aliveEnd = death != null ? death - 1 : lastIdx;
+    // sampling could miss bursts of several eat-events in a row. Only
+    // covers the eating phase — the return leg is handled by the shared
+    // checkpoint loop below, for every segment uniformly.
+    const aliveEnd = legCStartIndex;
     const events = [];
     let prevLen = null;
     for (let i = birth; i <= aliveEnd; i++) {
@@ -585,25 +621,66 @@ function buildSvg(grid, colors, speedMultiplier = 1) {
       stopList.push([pct, s]);
     };
 
+    // Each transition ramps for up to capPct — but if the next one arrives
+    // before that finishes, don't jump straight to either target. Track
+    // where the ramp actually is the instant it's interrupted (a plain
+    // linear read of its own progress so far — the same value CSS itself
+    // would be showing right then) and start the next ramp from there,
+    // aimed at the newly-known target. Nothing is ever anticipated ahead
+    // of an event that hasn't happened yet — a backlog only makes the next
+    // ramp move faster to still land within capPct, never earlier.
+    const changePoints = [];
     if (birth > 0) {
-      const nextPct = events.length > 1 ? events[1].pct : pctOf(aliveEnd);
-      pushStop(events[0].pct, 'opacity:0;transform:scale(0);');
-      pushStop(Math.min(events[0].pct + capPct, nextPct), styleOf(events[0]));
+      changePoints.push({ pct: events[0].pct, scale: events[0].scale, tt: events[0].tt });
     } else {
       pushStop(events[0].pct, styleOf(events[0]));
     }
     for (let k = 1; k < events.length; k++) {
-      const prevEvt = events[k - 1], curEvt = events[k];
-      const nextPct = k + 1 < events.length ? events[k + 1].pct : pctOf(aliveEnd);
-      pushStop(curEvt.pct, styleOf(prevEvt));
-      pushStop(Math.min(curEvt.pct + capPct, nextPct), styleOf(curEvt));
+      changePoints.push({ pct: events[k].pct, scale: events[k].scale, tt: events[k].tt });
     }
-    if (death != null) {
-      const deathPct = pctOf(death);
-      pushStop(deathPct, stopList[stopList.length - 1][1]);
-      pushStop(Math.min(deathPct + capPct, 100), 'opacity:0;transform:scale(0);');
-      pushStop(100, 'opacity:0;transform:scale(0);');
+    let curPct, curScale, curTt;
+    if (birth > 0) {
+      curPct = changePoints[0].pct;
+      curScale = 0;
+      curTt = changePoints[0].tt;
+      pushStop(curPct, 'opacity:0;transform:scale(0);');
+    } else {
+      curPct = events[0].pct;
+      curScale = events[0].scale;
+      curTt = events[0].tt;
     }
+    for (let idx = 0; idx < changePoints.length; idx++) {
+      const cp = changePoints[idx];
+      const naturalEndPct = curPct + capPct;
+      const nextPct = idx + 1 < changePoints.length ? changePoints[idx + 1].pct : pctOf(aliveEnd);
+      if (naturalEndPct <= nextPct) {
+        const style = styleOf({ scale: cp.scale, fill: lerpColor(BODY_COLOR, TAIL_COLOR, Math.min(cp.tt, 1)) });
+        pushStop(naturalEndPct, style);
+        if (naturalEndPct < nextPct) pushStop(nextPct, style);
+        curPct = nextPct; curScale = cp.scale; curTt = cp.tt;
+      } else {
+        const f = (nextPct - curPct) / capPct;
+        const midScale = curScale + (cp.scale - curScale) * f;
+        const midTt = curTt + (cp.tt - curTt) * f;
+        pushStop(nextPct, styleOf({ scale: midScale, fill: lerpColor(BODY_COLOR, TAIL_COLOR, Math.min(Math.max(midTt, 0), 1)) }));
+        curPct = nextPct; curScale = midScale; curTt = midTt;
+      }
+    }
+    // Return leg: the window is sliced into as many equal steps as
+    // segments will vanish, and at every slice boundary EVERY segment
+    // (not just whichever one is currently vanishing) gets a new
+    // waypoint — its shape as if the body were now exactly one segment
+    // shorter (virtualLen counts straight down: segCount, segCount-1, ...,
+    // finalLen). A straight line connects each pair of waypoints, so the
+    // whole tail moves together instead of one segment fading in isolation.
+    for (let k = 1; k <= dyingCount; k++) {
+      const virtualLen = segCount - k;
+      const { scale, fill } = shapeForLen(n, virtualLen);
+      const pct = pctOf(legCStartIndex + k * tailFadeSliceSteps);
+      pushStop(pct, `opacity:1;transform:scale(${scale.toFixed(2)});fill:${fill};`);
+      if (scale === 0) break;
+    }
+    pushStop(100, stopList[stopList.length - 1][1]);
 
     let kf = '';
     for (const [pct, bit] of stopList) kf += `${pct.toFixed(2)}%{${bit}}`;
