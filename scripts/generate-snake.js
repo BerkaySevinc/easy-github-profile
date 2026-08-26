@@ -136,11 +136,11 @@ function solveSnake(grid) {
   let eatenCount = 0;
   trail.push(head); growAt.push(false);
 
-  function bodyAgeMap() {
-    const len = Math.max(1, Math.round(bodyLenAt(eatenCount, totalEatable)));
+  function bodyAgeMap(ctx) {
+    const len = Math.max(1, Math.round(bodyLenAt(ctx.eatenCount, totalEatable)));
     const map = new Map();
-    for (let i = trail.length - 1, n = 0; i >= 0 && n < len; i--, n++) {
-      const key = trail[i].x + ',' + trail[i].y;
+    for (let i = ctx.trail.length - 1, n = 0; i >= 0 && n < len; i--, n++) {
+      const key = ctx.trail[i].x + ',' + ctx.trail[i].y;
       if (!map.has(key)) map.set(key, n);
     }
     return { map, len };
@@ -151,23 +151,24 @@ function solveSnake(grid) {
   // resort. dist is BIG-dominant (prefers a body-free route to a given
   // cell when one exists, however much longer) — internal routing only.
   // hopsOf holds the REAL number of steps the resulting route actually
-  // takes, used for cross-cell distance comparisons in weightedNearestTarget
-  // below, so a cell that only needed one quick step across the body isn't
-  // reported as if it were hundreds of steps away.
-  function reachability(targetLevel) {
-    const { map: bodyAge, len: bodyLen } = bodyAgeMap();
+  // takes, used for cross-cell distance comparisons below, so a cell that
+  // only needed one quick step across the body isn't reported as if it
+  // were hundreds of steps away.
+  function reachability(ctx, targetLevel) {
+    const { map: bodyAge, len: bodyLen } = bodyAgeMap(ctx);
     // Just needs to exceed the longest possible real path (a simple path can
     // never revisit a cell, so it can't exceed the grid's own cell count) —
     // that alone guarantees a body-free route always outweighs a shorter one
     // that touches the body, no matter how much longer the detour is.
     const BIG = WEEKS_TOTAL * DAYS_TOTAL + 1;
-    const startKey = head.x + ',' + head.y;
+    const startKey = ctx.head.x + ',' + ctx.head.y;
     const dist = new Map([[startKey, 0]]);
     const hopsOf = new Map([[startKey, 0]]);
+    const bodyHitsOf = new Map([[startKey, 0]]);
     const prev = new Map();
-    const coordOf = new Map([[startKey, { x: head.x, y: head.y }]]);
+    const coordOf = new Map([[startKey, { x: ctx.head.x, y: ctx.head.y }]]);
     const finalized = new Set();
-    const pq = [{ key: startKey, x: head.x, y: head.y, d: 0, hops: 0 }];
+    const pq = [{ key: startKey, x: ctx.head.x, y: ctx.head.y, d: 0, hops: 0, bodyHits: 0 }];
     const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 
     while (pq.length) {
@@ -182,7 +183,7 @@ function solveSnake(grid) {
         if (nx < 0 || nx >= WEEKS_TOTAL || ny < 0 || ny >= DAYS_TOTAL) continue;
         const key = nx + ',' + ny;
         if (finalized.has(key)) continue;
-        const ncell = state[nx][ny];
+        const ncell = ctx.state[nx][ny];
         const isTarget = ncell.level === targetLevel && !ncell.eaten;
         const isWall = !(ncell.level === 0 || ncell.level === null || ncell.eaten || isTarget);
         if (isWall) continue;
@@ -190,29 +191,30 @@ function solveSnake(grid) {
         const age = bodyAge.get(key);
         const stillOccupied = age !== undefined && nhops < bodyLen - age;
         const bodyCost = stillOccupied ? 1 : 0;
+        const nBodyHits = cur.bodyHits + bodyCost;
         const nd = cur.d + bodyCost * BIG + 1;
         if (!dist.has(key) || nd < dist.get(key)) {
           dist.set(key, nd);
           hopsOf.set(key, nhops);
+          bodyHitsOf.set(key, nBodyHits);
           prev.set(key, cur.key);
           coordOf.set(key, { x: nx, y: ny });
-          pq.push({ key, x: nx, y: ny, d: nd, hops: nhops });
+          pq.push({ key, x: nx, y: ny, d: nd, hops: nhops, bodyHits: nBodyHits });
         }
       }
     }
-    return { dist, hopsOf, prev, coordOf };
+    return { dist, hopsOf, bodyHitsOf, prev, coordOf };
   }
 
   // Full Dijkstra from the head, allowed to cross walls (tunnel) — but
   // minimizing wall crossings first, hop count only as a tie-break among
   // routes tied on wall count. hopsOf holds the REAL number of steps that
-  // route actually takes, used for cross-cell distance comparisons in
-  // weightedNearestTarget below — not an estimate, the true walked length,
-  // so a cell chosen as "nearest" is never secretly farther once the
-  // wall-minimal route to it turns out longer than its hop-only distance
-  // would have suggested.
-  function reachabilityMinWalls(targetLevel) {
-    const { map: bodyAge, len: bodyLen } = bodyAgeMap();
+  // route actually takes, used for cross-cell distance comparisons below —
+  // not an estimate, the true walked length, so a cell chosen as "nearest"
+  // is never secretly farther once the wall-minimal route to it turns out
+  // longer than its hop-only distance would have suggested.
+  function reachabilityMinWalls(ctx, targetLevel) {
+    const { map: bodyAge, len: bodyLen } = bodyAgeMap(ctx);
     // Exact integer lexicographic ordering, three tiers: wall count first,
     // own-body crossings second, hop count third. Each tier's multiplier is
     // sized so it can never be overtaken by any possible combination of the
@@ -222,13 +224,15 @@ function solveSnake(grid) {
     // reach one unit of the tier above.
     const MAX_HOPS = WEEKS_TOTAL * DAYS_TOTAL + 1;
     const BIG = MAX_HOPS * MAX_HOPS;
-    const startKey = head.x + ',' + head.y;
+    const startKey = ctx.head.x + ',' + ctx.head.y;
     const dist = new Map([[startKey, 0]]);
     const hopsOf = new Map([[startKey, 0]]);
+    const wallsOf = new Map([[startKey, 0]]);
+    const bodyHitsOf = new Map([[startKey, 0]]);
     const prev = new Map();
-    const coordOf = new Map([[startKey, { x: head.x, y: head.y }]]);
+    const coordOf = new Map([[startKey, { x: ctx.head.x, y: ctx.head.y }]]);
     const finalized = new Set();
-    const pq = [{ key: startKey, x: head.x, y: head.y, d: 0, hops: 0, walls: 0, bodyHits: 0 }];
+    const pq = [{ key: startKey, x: ctx.head.x, y: ctx.head.y, d: 0, hops: 0, walls: 0, bodyHits: 0 }];
     const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 
     while (pq.length) {
@@ -243,7 +247,7 @@ function solveSnake(grid) {
         if (nx < 0 || nx >= WEEKS_TOTAL || ny < 0 || ny >= DAYS_TOTAL) continue;
         const key = nx + ',' + ny;
         if (finalized.has(key)) continue;
-        const ncell = state[nx][ny];
+        const ncell = ctx.state[nx][ny];
         const isTarget = ncell.level === targetLevel && !ncell.eaten;
         const isWall = !(ncell.level === 0 || ncell.level === null || ncell.eaten || isTarget);
         const nhops = cur.hops + 1;
@@ -255,54 +259,172 @@ function solveSnake(grid) {
         if (!dist.has(key) || nd < dist.get(key)) {
           dist.set(key, nd);
           hopsOf.set(key, nhops);
+          wallsOf.set(key, nwalls);
+          bodyHitsOf.set(key, nBodyHits);
           prev.set(key, cur.key);
           coordOf.set(key, { x: nx, y: ny });
           pq.push({ key, x: nx, y: ny, d: nd, hops: nhops, walls: nwalls, bodyHits: nBodyHits });
         }
       }
     }
-    return { hopsOf, prev, coordOf };
+    return { hopsOf, wallsOf, bodyHitsOf, prev, coordOf };
   }
 
-  // A tunnel route to a given cell never loses to a real (non-tunnel) route
-  // to that SAME cell, no matter how much shorter tunneling would be — but
-  // across DIFFERENT cells, real walked distance alone decides: a cell only
-  // forced to use a tunnel isn't unfairly ranked behind a much farther
-  // walk-only one, and isn't unfairly favored either — its cost is the true
-  // length of the wall-minimal route it will actually take.
-  function weightedNearestTarget(targetLevel) {
-    const startKey = head.x + ',' + head.y;
-    const open = reachability(targetLevel);
-    const tunneled = reachabilityMinWalls(targetLevel);
+  // Deterministic stand-in for randomness: same grid, same eaten-so-far
+  // state, and same cell always hash to the same value, so a rerun on
+  // identical input reproduces the identical snake — but the value isn't
+  // biased toward any particular direction the way grid-scan order is.
+  function hashTieBreak(ctx, x, y) {
+    let h = (x * 374761393 + y * 668265263 + ctx.head.x * 2246822519 + ctx.head.y * 3266489917 + ctx.eatenCount * 2654435761) >>> 0;
+    h = Math.imul(h ^ (h >>> 15), 2246822519);
+    h = Math.imul(h ^ (h >>> 13), 3266489917);
+    h ^= h >>> 16;
+    return h >>> 0;
+  }
 
-    let bestKey = null, bestCost = Infinity, bestSearch = null;
+  // Finds every uneaten target-level cell tied for best under the fixed
+  // hierarchy: fewest real walked hops, then fewest walls crossed, then
+  // fewest self-crossings. A tunnel route to a given cell never loses to a
+  // real (non-tunnel) route to that SAME cell, no matter how much shorter
+  // tunneling would be — but across DIFFERENT cells, only real walked
+  // distance (then walls, then self-crossings) decides.
+  function collectBestCandidates(ctx, targetLevel) {
+    const startKey = ctx.head.x + ',' + ctx.head.y;
+    const open = reachability(ctx, targetLevel);
+    const tunneled = reachabilityMinWalls(ctx, targetLevel);
+
+    let bestCost = Infinity, bestWalls = Infinity, bestBodyHits = Infinity;
+    let candidates = [];
     for (let x = 0; x < WEEKS_TOTAL; x++) {
       for (let y = 0; y < DAYS_TOTAL; y++) {
-        const cell = state[x][y];
+        const cell = ctx.state[x][y];
         if (cell.level !== targetLevel || cell.eaten) continue;
         const key = x + ',' + y;
         if (key === startKey) continue;
         const search = open.dist.has(key) ? open : (tunneled.hopsOf.has(key) ? tunneled : null);
         if (!search) continue;
-        const cost = search.hopsOf.get(key);
-        // On an exact tie, the non-tunnel option wins — distance decided
-        // fairly either way, this just picks a side instead of leaving it
-        // to grid scan order.
-        const better = cost < bestCost || (cost === bestCost && search === open && bestSearch === tunneled);
-        if (better) { bestCost = cost; bestKey = key; bestSearch = search; }
+        const cand = {
+          key, search, x, y,
+          cost: search.hopsOf.get(key),
+          walls: search === tunneled ? tunneled.wallsOf.get(key) : 0,
+          bodyHits: search.bodyHitsOf.get(key),
+        };
+        if (
+          cand.cost < bestCost ||
+          (cand.cost === bestCost && cand.walls < bestWalls) ||
+          (cand.cost === bestCost && cand.walls === bestWalls && cand.bodyHits < bestBodyHits)
+        ) {
+          bestCost = cand.cost; bestWalls = cand.walls; bestBodyHits = cand.bodyHits;
+          candidates = [cand];
+        } else if (cand.cost === bestCost && cand.walls === bestWalls && cand.bodyHits === bestBodyHits) {
+          candidates.push(cand);
+        }
       }
     }
-    if (bestKey === null) return null;
+    return candidates;
+  }
 
+  function buildPathTo(ctx, cand) {
+    const startKey = ctx.head.x + ',' + ctx.head.y;
     const path = [];
-    let k = bestKey;
-    while (k !== startKey) { path.push(bestSearch.coordOf.get(k)); k = bestSearch.prev.get(k); }
+    let k = cand.key;
+    while (k !== startKey) { path.push(cand.search.coordOf.get(k)); k = cand.search.prev.get(k); }
     path.reverse();
     return path;
   }
 
+  function cloneCtx(ctx) {
+    return {
+      state: ctx.state.map(col => col.map(cell => ({ level: cell.level, eaten: cell.eaten }))),
+      trail: ctx.trail.slice(),
+      head: { x: ctx.head.x, y: ctx.head.y },
+      eatenCount: ctx.eatenCount,
+    };
+  }
+
+  // Walks ctx along path, eating any target-level cell it lands on, and
+  // reports whether the path crossed the snake's own current body (judged
+  // against how much of the body will still be there when each step
+  // actually arrives).
+  function applyPath(ctx, path, targetLevel, remainingRef, growAtOut) {
+    const { map: bodyBefore, len: bodyLen } = bodyAgeMap(ctx);
+    const crossed = path.some((p, idx) => {
+      const age = bodyBefore.get(p.x + ',' + p.y);
+      return age !== undefined && (idx + 1) < bodyLen - age;
+    });
+    for (const step of path) {
+      ctx.head = step;
+      ctx.trail.push(step);
+      const cell = ctx.state[step.x][step.y];
+      if (cell.level === targetLevel && !cell.eaten) {
+        cell.eaten = true;
+        ctx.eatenCount++;
+        remainingRef.value--;
+        if (growAtOut) growAtOut.push(true);
+      } else if (growAtOut) {
+        growAtOut.push(false);
+      }
+    }
+    return crossed ? 1 : 0;
+  }
+
+  // Resolves a tie without branching — used for every decision inside a
+  // simulated branch, so the lookahead below stays exactly one level deep
+  // instead of recursing into every nested tie it finds.
+  function pickBestFast(ctx, targetLevel) {
+    const candidates = collectBestCandidates(ctx, targetLevel);
+    if (candidates.length === 0) return null;
+    if (candidates.length === 1) return candidates[0];
+    let best = candidates[0], bestHash = hashTieBreak(ctx, best.x, best.y);
+    for (let i = 1; i < candidates.length; i++) {
+      const h = hashTieBreak(ctx, candidates[i].x, candidates[i].y);
+      if (h < bestHash) { bestHash = h; best = candidates[i]; }
+    }
+    return best;
+  }
+
+  // Finishes a level to completion inside ctx (mutating it), always via the
+  // fast tie-break — used both for the real run continuing after a
+  // branch-simulated pick, and as the "future" a simulated branch plays out
+  // to compare candidates fairly.
+  function runLevelFast(ctx, targetLevel, remainingRef, growAtOut) {
+    let crossings = 0;
+    while (remainingRef.value > 0) {
+      const cand = pickBestFast(ctx, targetLevel);
+      if (!cand) break;
+      const path = buildPathTo(ctx, cand);
+      crossings += applyPath(ctx, path, targetLevel, remainingRef, growAtOut);
+    }
+    return crossings;
+  }
+
+  // Picks the next cell to eat. When several tie for best, simulates
+  // finishing the rest of THIS level starting from each tied option (on a
+  // cloned, throwaway copy of the state) and keeps whichever leads to fewer
+  // further self-crossings — capped to one level of real branching; ties
+  // found inside a simulated branch resolve via the fast, non-branching
+  // pick above so cost stays bounded instead of exploding combinatorially.
+  function pickBestWithLookahead(ctx, targetLevel, remaining) {
+    const candidates = collectBestCandidates(ctx, targetLevel);
+    if (candidates.length <= 1) return candidates[0] || null;
+
+    let bestCand = null, bestCrossings = Infinity, bestHash = Infinity;
+    for (const cand of candidates) {
+      const simCtx = cloneCtx(ctx);
+      const path = buildPathTo(simCtx, cand);
+      const remainingRef = { value: remaining };
+      let crossings = applyPath(simCtx, path, targetLevel, remainingRef, null);
+      crossings += runLevelFast(simCtx, targetLevel, remainingRef, null);
+      const hash = hashTieBreak(ctx, cand.x, cand.y);
+      if (crossings < bestCrossings || (crossings === bestCrossings && hash < bestHash)) {
+        bestCrossings = crossings; bestCand = cand; bestHash = hash;
+      }
+    }
+    return bestCand;
+  }
+
   function pathToPoint(toX, toY, forbidTop, confineTop) {
-    const { map: bodyAge, len: bodyLen } = bodyAgeMap();
+    const { map: bodyAge, len: bodyLen } = bodyAgeMap({ trail, eatenCount });
     const BIG = 1e6;
     const startKey = head.x + ',' + head.y;
     const goalKey = toX + ',' + toY;
@@ -357,29 +479,22 @@ function solveSnake(grid) {
   const entrancePath = pathToPoint(cornerPoint.x, cornerPoint.y);
   if (entrancePath) for (const step of entrancePath) { head = step; trail.push(head); growAt.push(false); }
 
+  const ctx = { state, trail, head, eatenCount };
   for (let level = 1; level <= 4; level++) {
     let remaining = 0;
     for (let c = 0; c < WEEKS_TOTAL; c++) for (let y = 0; y < DAYS_TOTAL; y++) if (state[c][y].level === level) remaining++;
 
     while (remaining > 0) {
-      const path = weightedNearestTarget(level);
-      if (!path) break;
-
-      for (const step of path) {
-        head = step;
-        trail.push(head);
-        const cell = state[head.x][head.y];
-        if (cell.level === level && !cell.eaten) {
-          cell.eaten = true;
-          eatenCount++;
-          growAt.push(true);
-          remaining--;
-        } else {
-          growAt.push(false);
-        }
-      }
+      const cand = pickBestWithLookahead(ctx, level, remaining);
+      if (!cand) break;
+      const path = buildPathTo(ctx, cand);
+      const remainingRef = { value: remaining };
+      applyPath(ctx, path, level, remainingRef, growAt);
+      remaining = remainingRef.value;
     }
   }
+  head = ctx.head;
+  eatenCount = ctx.eatenCount;
 
   const preExitPoint = { x: WEEKS_TOTAL - 1, y: PAD_TOP };
   const exitCornerPoint = { x: WEEKS_TOTAL - 1, y: 0 };
