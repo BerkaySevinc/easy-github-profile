@@ -266,14 +266,18 @@ Your real contribution calendar, redrawn in a dark phosphor-green grid. Each eff
 ```json
 "contributionSnake": {
   "color": null,
-  "speed": 1
+  "speed": 1,
+  "startLength": 4,
+  "maxLength": 20
 }
 ```
 
 | Field | Description |
 |-------|-------------|
 | `color` | Hex color for the snake. `null` = uses `theme.accent` instead |
-| `speed` | Speed multiplier — `1` = normal, `2` = twice as fast, `0.5` = half speed. `null` = normal. Clamped to `(0, 3]` |
+| `speed` | Speed multiplier — `1` = normal, `2` = twice as fast, `0.5` = half speed. `null` = normal. Clamped to `[0.1, 3]` |
+| `startLength` | Length the snake starts at. `null` = `4` |
+| `maxLength` | Longest the snake can grow to after eating. Capped at `50`. `null` = `20` |
 
 A snake eats through your real contribution calendar, growing as it goes, then loops. The head is a lightened version of the color, fading darker toward the tail.
 

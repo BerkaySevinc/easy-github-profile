@@ -57,8 +57,8 @@ const PAD_TOP = 1, PAD_BOTTOM = 1, PAD_LEFT = 1, PAD_RIGHT = 1;
 const LEVEL0_LIGHT = '#ebedf0', LEVEL0_DARK = '#161b22';
 const LEVEL_FILL = [null, '#0f5b2c', '#12923f', '#22c95a', '#5dffa0'];
 
-const START_LEN = 4;
-const BODY_LIMIT = 20;
+let START_LEN = 4;
+let BODY_LIMIT = 20;
 const STEPS_PER_SEC = 6;
 
 // Length follows a sqrt curve toward BODY_LIMIT, capped at +1 per eaten cell
@@ -534,7 +534,13 @@ async function main() {
     base: config.contributionSnake?.color ?? config.theme?.accent ?? '#a78bfa',
   };
   const rawSpeed = config.contributionSnake?.speed;
-  const speedMultiplier = typeof rawSpeed === 'number' && rawSpeed > 0 ? Math.min(rawSpeed, 3) : 1;
+  const speedMultiplier = typeof rawSpeed === 'number' && rawSpeed > 0 ? Math.max(0.1, Math.min(rawSpeed, 3)) : 1;
+
+  const rawStartLength = config.contributionSnake?.startLength;
+  const rawMaxLength = config.contributionSnake?.maxLength;
+  if (typeof rawStartLength === 'number' && rawStartLength >= 0) START_LEN = Math.max(1, Math.min(50, Math.round(rawStartLength)));
+  if (typeof rawMaxLength === 'number' && rawMaxLength >= 1) BODY_LIMIT = Math.min(50, Math.round(rawMaxLength));
+  if (BODY_LIMIT < START_LEN) BODY_LIMIT = START_LEN;
 
   const grid = await fetchCalendar(owner, process.env.GITHUB_TOKEN);
 

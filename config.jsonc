@@ -112,8 +112,14 @@
     // Hex color for the snake. null = uses theme.accent instead.
     "color": null,
 
-    // Speed multiplier. 1 = normal, 2 = twice as fast, 0.5 = half speed. null = normal. Clamped to (0, 3].
-    "speed": 1
+    // Speed multiplier. 1 = normal, 2 = twice as fast, 0.5 = half speed. null = normal. Clamped to [0.1, 3].
+    "speed": 1,
+
+    // Length the snake starts at. null = 4.
+    "startLength": 4,
+
+    // Longest the snake can grow to after eating. Capped at 50. null = 20.
+    "maxLength": 20
 
   },
 
