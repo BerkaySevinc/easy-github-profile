@@ -349,26 +349,38 @@ function solveSnake(grid) {
   // reports whether the path crossed the snake's own current body (judged
   // against how much of the body will still be there when each step
   // actually arrives).
+  // Returns the self-crossing count attributed to each cell EATEN along the
+  // way, in order — not one count for the whole path. A path can eat more
+  // than one cell if it happens to pass through other uneaten same-level
+  // cells en route to the requested one (they're picked up for free, same
+  // as the real run), so each eaten cell gets its own count of crossings
+  // since the previous eat (or the start of the path, for the first one) —
+  // otherwise a leg that ate several cells at once would count as a single
+  // comparison unit while a same-length leg that ate only one wouldn't,
+  // throwing off any per-cell alignment between two simulated branches.
   function applyPath(ctx, path, targetLevel, remainingRef, growAtOut) {
     const { map: bodyBefore, len: bodyLen } = bodyAgeMap(ctx);
-    const crossed = path.some((p, idx) => {
-      const age = bodyBefore.get(p.x + ',' + p.y);
-      return age !== undefined && (idx + 1) < bodyLen - age;
-    });
-    for (const step of path) {
+    const perCellCrossCounts = [];
+    let sinceLastEat = 0;
+    for (let idx = 0; idx < path.length; idx++) {
+      const step = path[idx];
       ctx.head = step;
       ctx.trail.push(step);
+      const age = bodyBefore.get(step.x + ',' + step.y);
+      if (age !== undefined && (idx + 1) < bodyLen - age) sinceLastEat++;
       const cell = ctx.state[step.x][step.y];
       if (cell.level === targetLevel && !cell.eaten) {
         cell.eaten = true;
         ctx.eatenCount++;
         remainingRef.value--;
         if (growAtOut) growAtOut.push(true);
+        perCellCrossCounts.push(sinceLastEat);
+        sinceLastEat = 0;
       } else if (growAtOut) {
         growAtOut.push(false);
       }
     }
-    return crossed ? 1 : 0;
+    return perCellCrossCounts;
   }
 
   // Same crossing check as applyPath, without the eating side effects —
@@ -376,15 +388,15 @@ function solveSnake(grid) {
   // nothing is ever eaten.
   function applyMovementOnly(ctx, path) {
     const { map: bodyBefore, len: bodyLen } = bodyAgeMap(ctx);
-    const crossed = path.some((p, idx) => {
+    const crossCount = path.filter((p, idx) => {
       const age = bodyBefore.get(p.x + ',' + p.y);
       return age !== undefined && (idx + 1) < bodyLen - age;
-    });
+    }).length;
     for (const step of path) {
       ctx.head = step;
       ctx.trail.push(step);
     }
-    return crossed ? 1 : 0;
+    return crossCount;
   }
 
   // Resolves a tie without branching — used for every decision inside a
@@ -406,16 +418,24 @@ function solveSnake(grid) {
   // (non-branching) pick for the rest of this level, every level after it,
   // and finally the same exit/return route the real run will eventually
   // take (right edge, top-right corner, back along the top row to spawn) —
-  // yielding the cumulative real-hop position of every self-crossing it
-  // hits along the way, in order, until the whole rest of the animation is
-  // exhausted. Only pulled as far as needed: the caller stops asking for
-  // the next crossing as soon as a comparison is decided, so a branch that
-  // separates from its rivals on the very first crossing (or never
-  // crosses) never pays for anything beyond that. If it runs out (never
-  // crosses again, or the whole simulated future finishes clean), it
-  // returns the total walls tunneled through and total hops walked — free
-  // extra tie-break tiers for the caller, since this walk already had to
-  // compute them.
+  // yielding the self-crossing COUNT attributed to each cell eaten along
+  // the way (see applyPath), then one more count for each of the 3 fixed
+  // exit-route segments, in order, whether that unit crossed or not.
+  // Indexed by cells-eaten-so-far rather than real hops walked, so two
+  // candidates are always compared at the same relative point in the
+  // eating order — not skewed by one of them happening to walk a
+  // physically longer route to get there. Every candidate being compared
+  // shares the exact same total count of these units (the set of cells
+  // still left to eat, and how many of them exist, doesn't depend on which
+  // order they're eaten in or how many are picked up per leg; the exit
+  // route is always the same fixed 3 segments), so tied candidates always
+  // run out together. Only pulled as far as needed: the caller stops
+  // asking for the next one as soon as a comparison is decided, so a
+  // branch that separates from its rivals on the very first one never pays
+  // for anything beyond that. If it runs out (every unit compared, still
+  // tied on all of them), it returns the total walls tunneled through and
+  // total hops walked — free extra tie-break tiers for the caller, since
+  // this walk already had to compute them.
   function* crossingSequence(ctx, forcedCand, targetLevel, remaining) {
     let steps = 0;
     let walls = 0;
@@ -428,10 +448,10 @@ function solveSnake(grid) {
         nextCand = null;
         if (!cand) break;
         const path = buildPathTo(ctx, cand);
-        const crossed = applyPath(ctx, path, level, remainingRef, null);
+        const crossCounts = applyPath(ctx, path, level, remainingRef, null);
         steps += path.length;
         walls += cand.walls;
-        if (crossed) yield steps;
+        for (const c of crossCounts) yield c;
       }
       level++;
       if (level > 4) break;
@@ -447,37 +467,35 @@ function solveSnake(grid) {
     ]) {
       const legPath = pathToPoint(ctx, toX, toY, forbidTop, confineTop);
       if (!legPath) continue;
-      const crossed = applyMovementOnly(ctx, legPath);
+      const crossCount = applyMovementOnly(ctx, legPath);
       steps += legPath.length;
-      if (crossed) yield steps;
+      yield crossCount;
     }
     return { walls, steps };
   }
 
   // Picks the next cell to eat. When several tie for best, simulates each
   // tied option (on a cloned, throwaway copy of the state) forward and
-  // compares their crossingSequence lexicographically: whichever delays its
-  // FIRST self-crossing longest wins outright; on an exact tie there, both
-  // sides' SECOND crossing is compared instead, then the third, and so on —
-  // a candidate that runs out of crossings (never crosses again, or
-  // finishes the whole simulated future clean) counts as arriving at
-  // Infinity, always the best possible outcome at that position. Only
-  // candidates still tied at a given position get simulated one step
-  // deeper, so a decisive comparison (the common case) stays cheap. If
-  // several candidates all reach Infinity together (none of them ever
-  // crosses again), there's nothing left to compare on self-crossing
-  // grounds, so the total hops and walls crossingSequence already tallied
-  // for free settle it instead — fewer real hops first, then fewer walls,
-  // same priority order collectBestCandidates itself uses. Capped to one level of
-  // real branching — ties found inside a simulated branch resolve via the
-  // fast, non-branching pick above so cost stays bounded instead of
-  // exploding combinatorially. Simulating only to the end of THIS level
-  // isn't enough: a tie among the last cells of a level doesn't change how
-  // many of them get eaten (all tied cells get eaten either way), only the
-  // order — but that order decides where the head ends up when the level
-  // finishes, which is exactly what determines the next level's (or, for
-  // the last level, the exit/return route's) starting point and its
-  // crossings.
+  // compares their crossingSequence unit by unit, at the same unit index for
+  // every candidate: whichever crosses FEWEST times on the first unit they
+  // differ on wins outright; on an exact tie there, the next unit is
+  // compared instead, then the next, and so on. Only candidates still tied
+  // at a given unit get simulated one unit deeper, so a decisive comparison
+  // (the common case) stays cheap. Every candidate's simulated future has
+  // the same total unit count (see crossingSequence), so a group that's
+  // still tied after every unit has been compared runs out together —
+  // there's nothing left to compare on self-crossing grounds, so the total
+  // hops and walls crossingSequence already tallied for free settle it
+  // instead — fewer real hops first, then fewer walls, same priority order
+  // collectBestCandidates itself uses. Capped to one level of real
+  // branching — ties found inside a simulated branch resolve via the fast,
+  // non-branching pick above so cost stays bounded instead of exploding
+  // combinatorially. Simulating only to the end of THIS level isn't enough:
+  // a tie among the last cells of a level doesn't change how many of them
+  // get eaten (all tied cells get eaten either way), only the order — but
+  // that order decides where the head ends up when the level finishes,
+  // which is exactly what determines the next level's (or, for the last
+  // level, the exit/return route's) starting point and its crossings.
   function pickBestWithLookahead(ctx, targetLevel, remaining) {
     const candidates = collectBestCandidates(ctx, targetLevel);
     if (candidates.length <= 1) return candidates[0] || null;
@@ -485,19 +503,20 @@ function solveSnake(grid) {
     let contenders = candidates.map(cand => ({
       cand,
       gen: crossingSequence(cloneCtx(ctx), cand, targetLevel, remaining),
-      pos: null,
+      pos: 0,
+      done: false,
       final: null,
     }));
     const pull = c => {
       const n = c.gen.next();
-      if (n.done) { c.pos = Infinity; c.final = n.value; } else { c.pos = n.value; }
+      if (n.done) { c.done = true; c.final = n.value; } else { c.pos = n.value; }
     };
     for (const c of contenders) pull(c);
 
-    while (true) {
-      const maxPos = Math.max(...contenders.map(c => c.pos));
-      contenders = contenders.filter(c => c.pos === maxPos);
-      if (contenders.length === 1 || maxPos === Infinity) break;
+    while (!contenders[0].done) {
+      const minPos = Math.min(...contenders.map(c => c.pos));
+      contenders = contenders.filter(c => c.pos === minPos);
+      if (contenders.length === 1) break;
       for (const c of contenders) pull(c);
     }
 
