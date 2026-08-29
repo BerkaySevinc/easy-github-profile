@@ -170,6 +170,7 @@ function solveSnake(grid) {
     const bodyHitsOf = new Map([[startKey, 0]]);
     const prev = new Map();
     const coordOf = new Map([[startKey, { x: ctx.head.x, y: ctx.head.y }]]);
+    const bestHashOf = new Map([[startKey, -Infinity]]);
     const finalized = new Set();
     const pq = [{ key: startKey, x: ctx.head.x, y: ctx.head.y, d: 0, hops: 0, bodyHits: 0 }];
     const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
@@ -196,12 +197,14 @@ function solveSnake(grid) {
         const bodyCost = stillOccupied ? 1 : 0;
         const nBodyHits = cur.bodyHits + bodyCost;
         const nd = cur.d + bodyCost * BIG + 1;
-        if (!dist.has(key) || nd < dist.get(key)) {
+        const curHash = hashTieBreak(ctx, cur.x, cur.y);
+        if (!dist.has(key) || nd < dist.get(key) || (nd === dist.get(key) && curHash < bestHashOf.get(key))) {
           dist.set(key, nd);
           hopsOf.set(key, nhops);
           bodyHitsOf.set(key, nBodyHits);
           prev.set(key, cur.key);
           coordOf.set(key, { x: nx, y: ny });
+          bestHashOf.set(key, curHash);
           pq.push({ key, x: nx, y: ny, d: nd, hops: nhops, bodyHits: nBodyHits });
         }
       }
@@ -234,6 +237,7 @@ function solveSnake(grid) {
     const bodyHitsOf = new Map([[startKey, 0]]);
     const prev = new Map();
     const coordOf = new Map([[startKey, { x: ctx.head.x, y: ctx.head.y }]]);
+    const bestHashOf = new Map([[startKey, -Infinity]]);
     const finalized = new Set();
     const pq = [{ key: startKey, x: ctx.head.x, y: ctx.head.y, d: 0, hops: 0, walls: 0, bodyHits: 0 }];
     const dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
@@ -259,13 +263,15 @@ function solveSnake(grid) {
         const stillOccupied = age !== undefined && nhops < bodyLen - age;
         const nBodyHits = cur.bodyHits + (stillOccupied ? 1 : 0);
         const nd = nwalls * BIG + nBodyHits * MAX_HOPS + nhops;
-        if (!dist.has(key) || nd < dist.get(key)) {
+        const curHash = hashTieBreak(ctx, cur.x, cur.y);
+        if (!dist.has(key) || nd < dist.get(key) || (nd === dist.get(key) && curHash < bestHashOf.get(key))) {
           dist.set(key, nd);
           hopsOf.set(key, nhops);
           wallsOf.set(key, nwalls);
           bodyHitsOf.set(key, nBodyHits);
           prev.set(key, cur.key);
           coordOf.set(key, { x: nx, y: ny });
+          bestHashOf.set(key, curHash);
           pq.push({ key, x: nx, y: ny, d: nd, hops: nhops, walls: nwalls, bodyHits: nBodyHits });
         }
       }
@@ -516,13 +522,17 @@ function solveSnake(grid) {
     while (!contenders[0].done) {
       const minPos = Math.min(...contenders.map(c => c.pos));
       contenders = contenders.filter(c => c.pos === minPos);
+
       if (contenders.length === 1) break;
+      
       for (const c of contenders) pull(c);
     }
 
     if (contenders.length > 1) {
+
       const minSteps = Math.min(...contenders.map(c => c.final.steps));
       contenders = contenders.filter(c => c.final.steps === minSteps);
+
       if (contenders.length > 1) {
         const minWalls = Math.min(...contenders.map(c => c.final.walls));
         contenders = contenders.filter(c => c.final.walls === minWalls);
@@ -530,6 +540,7 @@ function solveSnake(grid) {
     }
 
     if (contenders.length === 1) return contenders[0].cand;
+
     let best = contenders[0], bestHash = hashTieBreak(ctx, best.cand.x, best.cand.y);
     for (let i = 1; i < contenders.length; i++) {
       const h = hashTieBreak(ctx, contenders[i].cand.x, contenders[i].cand.y);
