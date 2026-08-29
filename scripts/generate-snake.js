@@ -820,14 +820,31 @@ function buildSvg(grid, colors, speedMultiplier = 1) {
   const dyingCount = Math.max(0, segCount - finalLen);
   const tailFadeSliceSteps = dyingCount > 0 ? revealSpan / dyingCount : 0;
 
+  // React to eating rather than anticipate it: hold, then ramp to the new
+  // value over at most HOLD_CAP seconds — otherwise a late-cycle gap
+  // between eat-events (growth flattens near the end) gets smeared across
+  // the whole gap, repainting every frame for a change nobody can see.
+  // Birth/death reuse the same ramp for appearing/vanishing — including the
+  // head's own one-shot startup pop below, so every segment (head included)
+  // pops in over the exact same real-world duration.
+  const HOLD_CAP = 0.3;
+
+  style += `@keyframes head-pop{0%{opacity:0;transform:scale(0);}100%{opacity:1;transform:scale(1);}}`;
+
   for (let n = 0; n < segCount; n++) {
     // Positive delay trails segment n behind the head by n steps (wrapper
     // position only — the shape animation below is already absolute-timed
     // and must not be delayed again).
     const posDelay = n / stepsPerSec;
     if (n === 0) {
+      // Head has no growth/tail-fade animation of its own (fixed size/color
+      // always), so unlike the body segments below it doesn't need a
+      // hold-then-pop layered over a continuous `name` animation — just a
+      // plain one-shot pop-in from scale 0, same HOLD_CAP duration. posDelay
+      // is always 0 for the head (n=0), so it pops in immediately at t=0
+      // with no hold phase, right as the page loads.
       segments += `<g style="will-change:transform;animation:snake-pos ${totalDuration.toFixed(2)}s linear infinite;animation-delay:${posDelay.toFixed(3)}s;">`
-        + `<rect x="${(-MAX_SIZE / 2).toFixed(2)}" y="${(-MAX_SIZE / 2).toFixed(2)}" width="${MAX_SIZE}" height="${MAX_SIZE}" rx="${(MAX_SIZE * 0.32).toFixed(2)}" fill="${HEAD_COLOR}"/>`
+        + `<rect x="${(-MAX_SIZE / 2).toFixed(2)}" y="${(-MAX_SIZE / 2).toFixed(2)}" width="${MAX_SIZE}" height="${MAX_SIZE}" rx="${(MAX_SIZE * 0.32).toFixed(2)}" fill="${HEAD_COLOR}" style="will-change:transform;animation:head-pop ${HOLD_CAP}s linear 1;animation-fill-mode:none;transform-box:fill-box;transform-origin:center;"/>`
         + `</g>`;
       continue;
     }
@@ -854,12 +871,6 @@ function buildSvg(grid, colors, speedMultiplier = 1) {
       events.push({ pct: pctOf(aliveEnd), ...shapeAt(n, aliveEnd) });
     }
 
-    // React to eating rather than anticipate it: hold, then ramp to the new
-    // value over at most HOLD_CAP seconds — otherwise a late-cycle gap
-    // between eat-events (growth flattens near the end) gets smeared across
-    // the whole gap, repainting every frame for a change nobody can see.
-    // Birth/death reuse the same ramp for appearing/vanishing.
-    const HOLD_CAP = 0.3;
     const capPct = (HOLD_CAP / totalDuration) * 100;
     const styleOf = e => `opacity:1;transform:scale(${e.scale.toFixed(2)});fill:${e.fill};`;
     const pushStop = (pct, s) => {
@@ -933,8 +944,34 @@ function buildSvg(grid, colors, speedMultiplier = 1) {
     for (const [pct, bit] of stopList) kf += `${pct.toFixed(2)}%{${bit}}`;
     const name = `seg${n}`;
     style += `@keyframes ${name}{${kf}}`;
+
+    // Startup segments (birth===0) are already opacity:1/full-scale in
+    // `name` above from 0% — but their position <g> hasn't caught up
+    // (posDelay) yet, so a one-shot reveal (same pop-in look as a normally
+    // grown segment: scale0→target) is layered AFTER `name`, winning while
+    // it's active. It holds at scale0/opacity0 until posDelay has passed
+    // (position already correct by then, not overlapping it), pops over
+    // the next POP_DUR_SEC, then — fill-mode:none, unlike a frozen-forever
+    // fade — releases control back to `name` for the rest of the loop, so
+    // later real growth/shrink still shows. Runs once (iteration-count:1),
+    // so it never replays on a loop reset.
+    let segStyle;
+    if (birth === 0) {
+      const fadeName = `${name}f`;
+      const fadeDuration = posDelay + HOLD_CAP;
+      const holdPct = (posDelay / fadeDuration) * 100;
+      style += `@keyframes ${fadeName}{0%{opacity:0;transform:scale(0);}${holdPct.toFixed(2)}%{opacity:0;transform:scale(0);}100%{${stopList[0][1]}}}`;
+      segStyle = `animation-name:${name},${fadeName};`
+        + `animation-duration:${totalDuration.toFixed(2)}s,${fadeDuration.toFixed(3)}s;`
+        + `animation-timing-function:linear,linear;`
+        + `animation-iteration-count:infinite,1;`
+        + `animation-fill-mode:none,none;`;
+    } else {
+      segStyle = `animation:${name} ${totalDuration.toFixed(2)}s linear infinite;`;
+    }
+
     segments += `<g style="will-change:transform;animation:snake-pos ${totalDuration.toFixed(2)}s linear infinite;animation-delay:${posDelay.toFixed(3)}s;">`
-      + `<rect x="${(-MAX_SIZE / 2).toFixed(2)}" y="${(-MAX_SIZE / 2).toFixed(2)}" width="${MAX_SIZE}" height="${MAX_SIZE}" rx="${(MAX_SIZE * 0.32).toFixed(2)}" fill="${BODY_COLOR}" style="will-change:transform;animation:${name} ${totalDuration.toFixed(2)}s linear infinite;transform-box:fill-box;transform-origin:center;"/>`
+      + `<rect x="${(-MAX_SIZE / 2).toFixed(2)}" y="${(-MAX_SIZE / 2).toFixed(2)}" width="${MAX_SIZE}" height="${MAX_SIZE}" rx="${(MAX_SIZE * 0.32).toFixed(2)}" fill="${BODY_COLOR}" style="will-change:transform;${segStyle}transform-box:fill-box;transform-origin:center;"/>`
       + `</g>`;
   }
 
