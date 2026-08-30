@@ -61,6 +61,17 @@ let START_LEN = 4;
 let BODY_LIMIT = 20;
 const STEPS_PER_SEC = 6;
 
+// Bounds how "smart" (recursive lookahead, instead of a flat hash) a tie
+// simulation is allowed to be, at any nesting depth. One depth value drives
+// all three limits via the same formulas; each nested smart resolution gets
+// depth-2, so the limits shrink geometrically and self-terminate once an
+// exponent goes negative — no separate max-recursion flag needed.
+const SMART_BASE_DEPTH = 6;
+function smartLimits(depth) {
+  const p2 = e => (e < 0 ? 0 : Math.pow(2, e));
+  return { length: p2(depth), position: p2(depth - 3), count: p2(depth - 5) };
+}
+
 // Length follows a sqrt curve toward BODY_LIMIT, capped at +1 per eaten cell
 // so growth never jumps by more than one unit at a time.
 const _lenTableCache = new Map();
@@ -137,7 +148,7 @@ function solveSnake(grid) {
   let head = spawnPoint;
   let eatenCount = 0;
   trail.push(head); growAt.push(false);
-  const ctx = { state, trail, head, eatenCount };
+  const ctx = { state, trail, head, eatenCount, __smartDepth: SMART_BASE_DEPTH };
 
   function bodyAgeMap(ctx) {
     const len = Math.max(1, Math.round(bodyLenAt(ctx.eatenCount, totalEatable)));
@@ -348,6 +359,9 @@ function solveSnake(grid) {
       trail: ctx.trail.slice(),
       head: { x: ctx.head.x, y: ctx.head.y },
       eatenCount: ctx.eatenCount,
+      __smartDepth: ctx.__smartDepth,
+      __smartUsed: ctx.__smartUsed,
+      __smartUnit: ctx.__smartUnit,
     };
   }
 
@@ -450,13 +464,36 @@ function solveSnake(grid) {
     let nextCand = forcedCand;
     while (level <= 4) {
       while (remainingRef.value > 0) {
-        const cand = nextCand || pickBestFast(ctx, level);
+        let cand;
+        if (nextCand) {
+          cand = nextCand;
+        } else {
+          const { position, count } = smartLimits(ctx.__smartDepth ?? SMART_BASE_DEPTH);
+          const eligible = (ctx.__smartUnit || 0) < position && (ctx.__smartUsed || 0) < count;
+          const cs = eligible ? collectBestCandidates(ctx, level) : null;
+          if (eligible && cs.length > 1) {
+            // Resolve this one tie one level deeper (real lookahead) instead
+            // of the flat hash pick — the SAME depth-shrink rule applies
+            // recursively inside it, so it self-terminates instead of
+            // needing a separate max-recursion guard.
+            ctx.__smartUsed = (ctx.__smartUsed || 0) + 1;
+            const savedDepth = ctx.__smartDepth;
+            ctx.__smartDepth = (savedDepth ?? SMART_BASE_DEPTH) - 2;
+            cand = pickBestWithLookahead(ctx, level, remainingRef.value);
+            ctx.__smartDepth = savedDepth;
+          } else if (eligible) {
+            cand = cs[0] || null;
+          } else {
+            cand = pickBestFast(ctx, level);
+          }
+        }
         nextCand = null;
         if (!cand) break;
         const path = buildPathTo(ctx, cand);
         const crossCounts = applyPath(ctx, path, level, remainingRef, null);
         steps += path.length;
         walls += cand.walls;
+        ctx.__smartUnit = (ctx.__smartUnit || 0) + crossCounts.length;
         for (const c of crossCounts) yield c;
       }
       level++;
@@ -506,6 +543,14 @@ function solveSnake(grid) {
     const candidates = collectBestCandidates(ctx, targetLevel);
     if (candidates.length <= 1) return candidates[0] || null;
 
+    // Only nested (smart-triggered) calls get a pull budget — the outer
+    // simulation, run for every real tie regardless of depth, already
+    // terminates in bounded time on its own (verified: worst case ~10s on a
+    // fully-dense grid, same as before any of this existed) and capping it
+    // too would just throw away a real distinction it would have found past
+    // the cap, forcing an unnecessary hash fallback for no safety benefit.
+    const depth = ctx.__smartDepth ?? SMART_BASE_DEPTH;
+    const pullLimit = depth >= SMART_BASE_DEPTH ? Infinity : smartLimits(depth).length;
     let contenders = candidates.map(cand => ({
       cand,
       gen: crossingSequence(cloneCtx(ctx), cand, targetLevel, remaining),
@@ -519,17 +564,23 @@ function solveSnake(grid) {
     };
     for (const c of contenders) pull(c);
 
-    while (!contenders[0].done) {
+    let pulls = 1;
+    while (!contenders[0].done && pulls < pullLimit) {
       const minPos = Math.min(...contenders.map(c => c.pos));
       contenders = contenders.filter(c => c.pos === minPos);
 
       if (contenders.length === 1) break;
-      
+
       for (const c of contenders) pull(c);
+      pulls++;
     }
 
-    if (contenders.length > 1) {
-
+    // Reached the pull budget with several candidates still tied and not
+    // actually done (crossingSequence never ran to completion) — c.final is
+    // only ever set when a generator finishes, so there's no real
+    // steps/walls data to compare here. Skip straight to the hash fallback
+    // instead of reading .final off an unfinished contender.
+    if (contenders.length > 1 && contenders.every(c => c.done)) {
       const minSteps = Math.min(...contenders.map(c => c.final.steps));
       contenders = contenders.filter(c => c.final.steps === minSteps);
 
